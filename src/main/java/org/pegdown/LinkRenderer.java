@@ -97,10 +97,17 @@ public class LinkRenderer {
             int pos;
             if ((pos = text.indexOf("|")) >= 0) {
                 url = text.substring(0, pos);
-                text = text.substring(pos+1);
+                text = text.substring(pos + 1);
             }
 
-            url = "./" + URLEncoder.encode(url.replace(' ', '-'), "UTF-8") + ".html";
+            // vsch: #200 WikiLinks can have anchor # refs
+            String suffix = "";
+            if ((pos = url.lastIndexOf("#")) >= 0) {
+                suffix = url.substring(pos);
+                url = url.substring(0, pos);
+            }
+
+            url = "./" + URLEncoder.encode(url.replace(' ', '-'), "UTF-8") + ".html" + suffix;
             return new Rendering(url, text);
         } catch (UnsupportedEncodingException e) {
             throw new IllegalStateException();

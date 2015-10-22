@@ -3,12 +3,13 @@ package org.pegdown;
 import org.parboiled.common.StringUtils;
 import org.pegdown.ast.*;
 
-import static org.pegdown.FastEncoder.*;
-
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.pegdown.FastEncoder.encode;
+import static org.pegdown.FastEncoder.obfuscate;
 
 /**
  * A LinkRenderer is responsible for turning an AST node representing a link into a {@link LinkRenderer.Rendering}
@@ -50,6 +51,20 @@ public class LinkRenderer {
         }
 
         public Rendering withAttribute(Attribute attr) {
+            int iMax = attributes.size();
+
+            // vsch: a little wasteful, a Map would be better, but we don't have too many attributes and
+            // this will not break code for those that have implemented their own derived ToHtmlSerializers.
+            for (int i = 0; i < iMax; i++) {
+                Attribute attribute = attributes.get(i);
+                if (attribute.name.equals(attr.name)) {
+                    // vsch: need to handle setting multiple classes, works for values too
+                    // concatenate them with space between values, as for class
+                    attr = new Attribute(attr.name, attribute.value + " " + attr.value);
+                    attributes.remove(i);
+                    break;
+                }
+            }
             attributes.add(attr);
             return this;
         }

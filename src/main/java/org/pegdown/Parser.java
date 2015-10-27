@@ -1588,8 +1588,8 @@ public class Parser extends BaseParser<Object> implements Extensions {
                 TableDivider(node),
                 Optional(
                         NodeSequence(
-                                TableRow(), push(1, new TableBodyNode()) && addAsChild(),
-                                ZeroOrMore(TableRow(), addAsChild())
+                                TableRowAfterDivider(), push(1, new TableBodyNode()) && addAsChild(),
+                                ZeroOrMore(TableRowAfterDivider(), addAsChild())
                         ),
                         addAsChild() // add the TableHeaderNode to the TableNode
                 ),
@@ -1663,6 +1663,18 @@ public class Parser extends BaseParser<Object> implements Extensions {
         );
     }
 
+    public Rule TableRowAfterDivider() {
+        Var<Boolean> leadingPipe = new Var<Boolean>(Boolean.FALSE);
+        return NodeSequence(
+                push(new TableRowNode()),
+                Optional('|', leadingPipe.set(Boolean.TRUE)),
+                OneOrMore(TableCellAfterDivider(), addAsChild()),
+                leadingPipe.get() || ((Node) peek()).getChildren().size() > 1 ||
+                        getContext().getInputBuffer().charAt(matchEnd() - 1) == '|',
+                Sp(), Newline()
+        );
+    }
+
     // vsch: #183 Exclude the trailing || from TableCellNode node, leading ones are not included, it makes it more intuitive
     // that the TableCell will include only the text of the cell.
     public Rule TableCell() {
@@ -1670,6 +1682,23 @@ public class Parser extends BaseParser<Object> implements Extensions {
                 NodeSequence(
                         push(new TableCellNode()),
                         TestNot(Sp(), Optional(':'), Sp(), OneOrMore('-'), Sp(), Optional(':'), Sp(), FirstOf('|', Newline())),
+                        Optional(Sp(), TestNot('|'), NotNewline()),
+                        OneOrMore(
+                                TestNot('|'), TestNot(Sp(), Newline()), Inline(),
+                                addAsChild(),
+                                Optional(Sp(), Test('|'), Test(Newline()))
+                        )
+                ),
+                ZeroOrMore('|'),
+                ((TableCellNode) peek()).setColSpan(Math.max(1, matchLength()))
+        );
+    }
+
+    // vsch: if a table divider was seen then we can have cells that look like the divider cell, it is not a divider
+    public Rule TableCellAfterDivider() {
+        return Sequence(
+                NodeSequence(
+                        push(new TableCellNode()),
                         Optional(Sp(), TestNot('|'), NotNewline()),
                         OneOrMore(
                                 TestNot('|'), TestNot(Sp(), Newline()), Inline(),

@@ -38,3 +38,12 @@ Content       |   **Cell**    |         Cell |
 New section   |     More      |         Data |
 And more      |               |   And more   |
 [this is the caption]
+
+Tables with divider looking table cell:
+
+ Name | Firstname | Age
+------|-----------|----:
+  Fox | Peter     | 42
+------|-----------|----:
+  Guy | Ritchie   | ca. 60
+

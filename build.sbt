@@ -1,6 +1,6 @@
 name := "pegdown"
 
-version := "1.6.3"
+version := "1.6.4"
 
 homepage := Some(new URL("http://pegdown.org"))
 

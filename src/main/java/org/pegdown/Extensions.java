@@ -152,12 +152,10 @@ public interface Extensions {
      * Anchor link is added as first element inside the header with empty content: `<h1><a name="header-a"></a>header a</h1>`
      */
     static final int EXTANCHORLINKS = 0x00400000;
-    static final int EXTANCHORLINKS_WRAP = 0x00800000;
 
     /**
-     * Generate anchor links for headers using complete contents of the header.
-     * Spaces and non-alphanumerics replaced by `-`, multiple dashes trimmed to one.
-     * Anchor link is added wrapping the header content as without EXTANCHORLINKS: `<h1><a name="header-a">header a</a></h1>`
+     * EXTANCHORLINKS should wrap header content instead of creating an empty anchor.
+     * Anchor link wrapps the header content: `<h1><a name="header-a">header a</a></h1>`
      */
     static final int EXTANCHORLINKS_WRAP = 0x00800000;
 

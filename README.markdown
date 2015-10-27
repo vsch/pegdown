@@ -32,6 +32,7 @@ Currently _pegdown_ supports the following extensions over standard Markdown:
 * EXTANCHORLINKS: Generate anchor links for headers using complete contents of the header.
     * Spaces and non-alphanumerics replaced by `-`, multiple dashes trimmed to one.
     * Anchor link is added as first element inside the header with empty content: `<h1><a name="header"></a>header</h1>`
+* EXTANCHORLINKS_WRAP: used in conjunction with above to create an anchor that wraps header content: `<h1><a name="header">header</a></h1>` 
                         
 Note: _pegdown_ differs from the original Markdown in that it ignores in-word emphasis as in
 

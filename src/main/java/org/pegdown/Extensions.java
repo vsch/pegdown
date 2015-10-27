@@ -155,6 +155,13 @@ public interface Extensions {
     static final int EXTANCHORLINKS_WRAP = 0x00800000;
 
     /**
+     * Generate anchor links for headers using complete contents of the header.
+     * Spaces and non-alphanumerics replaced by `-`, multiple dashes trimmed to one.
+     * Anchor link is added wrapping the header content as without EXTANCHORLINKS: `<h1><a name="header-a">header a</a></h1>`
+     */
+    static final int EXTANCHORLINKS_WRAP = 0x00800000;
+
+    /**
      * All Optionals other than Suppress and FORCELISTITEMPARA which is a backwards compatibility extension
      *
      */

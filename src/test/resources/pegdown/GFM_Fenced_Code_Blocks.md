@@ -48,3 +48,13 @@ should still be fenced
 `````
 should still be fenced
 ````
+
+test false opening code fence
+```inline code```
+```inline code 2```
+
+not code
+
+```
+fenced block
+```

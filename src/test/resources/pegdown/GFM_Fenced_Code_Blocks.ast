@@ -1,4 +1,4 @@
-RootNode [0-1235]
+RootNode [0-1336]
   ParaNode [0-20]
     SuperNode [0-20]
       TextNode [0-19] 'A fenced code block'
@@ -18,3 +18,14 @@ RootNode [0-1235]
     SuperNode [787-822]
       TextNode [787-822] 'test opening with more than 3 ticks'
   VerbatimNode [824-1235] 'public static String message(@PropertyKey(resourceBundle = BUNDLE_NAME) String key, Object... params) {\n    return CommonBundle.message(BUNDLE, key, params);\n}\n\npublic static String messageOrBlank(@PropertyKey(resourceBundle = BUNDLE_NAME) String key, Object... params) {\n    return CommonBundle.messageOrDefault(BUNDLE, key, "", params);\n}\n```\nshould still be fenced\n`````\nshould still be fenced\n'
+  ParaNode [1236-1303]
+    SuperNode [1236-1303]
+      TextNode [1236-1265] 'test false opening code fence'
+      SimpleNode [1265-1266] Linebreak
+      CodeNode [1266-1283] 'inline code'
+      SimpleNode [1283-1284] Linebreak
+      CodeNode [1284-1303] 'inline code 2'
+  ParaNode [1305-1313]
+    SuperNode [1305-1313]
+      TextNode [1305-1313] 'not code'
+  VerbatimNode [1315-1336] 'fenced block\n'

@@ -37,7 +37,7 @@ public interface Extensions {
 
     /**
      * All of the smartypants prettyfications. Equivalent to SMARTS + QUOTES.
-     * 
+     *
      * @see <a href="http://daringfireball.net/projects/smartypants/">Smartypants</a>
      */
     static final int SMARTYPANTS = SMARTS + QUOTES;
@@ -71,7 +71,7 @@ public interface Extensions {
      * @see <a href="http://fletcherpenney.net/multimarkdown/users_guide/">MultiMarkdown</a>
      */
     static final int TABLES = 0x20;
-    
+
     /**
      * PHP Markdown Extra style definition lists.
      * Additionally supports the small extension proposed in the article referenced below.
@@ -152,6 +152,13 @@ public interface Extensions {
      * Anchor link is added as first element inside the header with empty content: `<h1><a name="header-a"></a>header a</h1>`
      */
     static final int EXTANCHORLINKS = 0x00400000;
+
+    /**
+     * Generate anchor links for headers using complete contents of the header.
+     * Spaces and non-alphanumerics replaced by `-`, multiple dashes trimmed to one.
+     * Anchor link is added wrapping the header content as without EXTANCHORLINKS: `<h1><a name="header-a">header a</a></h1>`
+     */
+    static final int EXTANCHORLINKS_WRAP = 0x00800000;
 
     /**
      * All Optionals other than Suppress and FORCELISTITEMPARA which is a backwards compatibility extension

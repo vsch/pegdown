@@ -88,6 +88,8 @@ abstract class AbstractPegDownSpec extends Specification {
     out.toString
   }
 
-  def normalize(string: String) = string.replace("\r\n", "\n").replace("\r", "\n")
+  // vsch: seems like there is a bug in Tidy, passing in HTML with <br>\n results in <br>\n\n, and passing one with <br>\n\n results in <br>\n
+  // didn't look too deep into it but the following for now solves the problem.
+  def normalize(string: String) = string.replace("\r\n", "\n").replace("\r", "\n").replace("<br>\n\n", "<br>\n")
 
 }

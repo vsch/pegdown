@@ -38,7 +38,7 @@ Currently _pegdown_ supports the following extensions over standard Markdown:
     ```markdown
     This paragraph has a footnote[^1] and another footnote[^2].
     
-    This one has more but out of sequence[^4] and [^8]. 
+    This one has more but out of sequence[^4] and[^8]. 
     
     [^2]: Footnote 2 with a bit more text
         and another continuation line
@@ -56,7 +56,7 @@ Currently _pegdown_ supports the following extensions over standard Markdown:
     
     ```html
     <p>This paragraph has a footnote<sup id="fnref-1"><a href="#fn-1" class="footnote-ref">1</a></sup> and another footnote<sup id="fnref-2"><a href="#fn-2" class="footnote-ref">2</a></sup>.</p>
-    <p>This one has more but out of sequence<sup id="fnref-3"><a href="#fn-3" class="footnote-ref">3</a></sup> and <sup id="fnref-4"><a href="#fn-4" class="footnote-ref">4</a></sup>. </p><div class="footnotes">
+    <p>This one has more but out of sequence<sup id="fnref-3"><a href="#fn-3" class="footnote-ref">3</a></sup> and<sup id="fnref-4"><a href="#fn-4" class="footnote-ref">4</a></sup>. </p><div class="footnotes">
     <hr/>
     <ol>
     <li id="fn-1"><p>Footnote 1<a href="#fnref-1" class="footnote-backref">&#8617;</a></p></li>
@@ -69,7 +69,7 @@ Currently _pegdown_ supports the following extensions over standard Markdown:
     to look like this:
     
 <p>This paragraph has a footnote<sup id="fnref-1"><a href="#fn-1" class="footnote-ref">1</a></sup> and another footnote<sup id="fnref-2"><a href="#fn-2" class="footnote-ref">2</a></sup>.</p>
-<p>This one has more but out of sequence<sup id="fnref-3"><a href="#fn-3" class="footnote-ref">3</a></sup> and <sup id="fnref-4"><a href="#fn-4" class="footnote-ref">4</a></sup>. </p><div class="footnotes">
+<p>This one has more but out of sequence<sup id="fnref-3"><a href="#fn-3" class="footnote-ref">3</a></sup> and<sup id="fnref-4"><a href="#fn-4" class="footnote-ref">4</a></sup>. </p><div class="footnotes">
 <hr/>
 <ol>
 <li id="fn-1"><p>Footnote 1<a href="#fnref-1" class="footnote-backref">&#8617;</a></p></li>

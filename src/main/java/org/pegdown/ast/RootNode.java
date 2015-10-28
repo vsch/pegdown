@@ -27,6 +27,15 @@ import static org.parboiled.common.Preconditions.checkArgNotNull;
 public class RootNode extends SuperNode {
     private List<ReferenceNode> references = ImmutableList.of();
     private List<AbbreviationNode> abbreviations = ImmutableList.of();
+    private List<FootnoteNode> footnotes = ImmutableList.of();
+
+    public List<FootnoteNode> getFootnotes() {
+        return footnotes;
+    }
+
+    public void setFootnotes(List<FootnoteNode> footnotes) {
+        this.footnotes = footnotes;
+    }
 
     public List<ReferenceNode> getReferences() {
         return references;

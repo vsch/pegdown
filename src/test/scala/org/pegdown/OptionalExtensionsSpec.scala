@@ -80,6 +80,26 @@ class OptionalExtensionsSpec extends AbstractPegDownSpec {
         implicit val processor = new PegDownProcessor(ALL | EXTANCHORLINKS)
         testASTAlt("OptionalExtensions/extanchors", "-ext")
       }
+
+      "footnotes-no-ext" in {
+        implicit val processor = new PegDownProcessor(ALL)
+        testAlt("OptionalExtensions/footnotes", "-no-ext")
+      }
+
+      "footnotes-ext AST" in {
+        implicit val processor = new PegDownProcessor(ALL)
+        testASTAlt("OptionalExtensions/footnotes", "-no-ext")
+      }
+
+      "footnotes-ext" in {
+        implicit val processor = new PegDownProcessor(ALL | FOOTNOTES)
+        testAlt("OptionalExtensions/footnotes", "-ext")
+      }
+
+      "footnotes-ext AST" in {
+        implicit val processor = new PegDownProcessor(ALL | FOOTNOTES)
+        testASTAlt("OptionalExtensions/footnotes", "-ext")
+      }
     }
   }
 }

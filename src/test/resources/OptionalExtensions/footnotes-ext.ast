@@ -1,0 +1,21 @@
+RootNode [0-340]
+  ParaNode [0-59]
+    SuperNode [0-59]
+      TextNode [0-29] 'This paragraph has a footnote'
+      FootnoteRefNode [29-33] '[^1]'
+      TextNode [33-54] ' and another footnote'
+      FootnoteRefNode [54-58] '[^2]'
+      SpecialTextNode [58-59] '.'
+  ParaNode [61-113]
+    SuperNode [61-113]
+      TextNode [61-98] 'This one has more but out of sequence'
+      FootnoteRefNode [98-102] '[^4]'
+      TextNode [102-107] ' and '
+      FootnoteRefNode [107-111] '[^8]'
+      SpecialTextNode [111-112] '.'
+      TextNode [112-113] ' '
+  FootnoteNode [116-187] '[^2]: '
+  FootnoteNode [193-209] '[^1]: '
+  FootnoteNode [211-278] '[^3]: '
+  FootnoteNode [280-310] '[^4]: '
+  FootnoteNode [312-340] '[^8]: '

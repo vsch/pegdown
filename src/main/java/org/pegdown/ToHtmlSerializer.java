@@ -22,11 +22,7 @@ import org.parboiled.common.StringUtils;
 import org.pegdown.ast.*;
 import org.pegdown.plugins.ToHtmlSerializerPlugin;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 import static org.parboiled.common.Preconditions.checkArgNotNull;
 
@@ -41,8 +37,10 @@ public class ToHtmlSerializer implements Visitor {
     protected TableNode currentTableNode;
     protected int currentTableColumn;
     protected boolean inTableHeader;
+    protected int rootNodeRecursion = 0;
 
     protected Map<String, VerbatimSerializer> verbatimSerializers;
+    protected Map<Integer, Integer> referencedFootnotes = new HashMap<Integer, Integer>();
 
     public ToHtmlSerializer(LinkRenderer linkRenderer) {
         this(linkRenderer, Collections.<ToHtmlSerializerPlugin>emptyList());
@@ -72,21 +70,72 @@ public class ToHtmlSerializer implements Visitor {
     }
 
     public void visit(RootNode node) {
-        for (ReferenceNode refNode : node.getReferences()) {
-            visitChildren(refNode);
-            references.put(normalize(printer.getString()), refNode);
-            printer.clear();
+        rootNodeRecursion++;
+        try {
+            for (ReferenceNode refNode : node.getReferences()) {
+                visitChildren(refNode);
+                references.put(normalize(printer.getString()), refNode);
+                printer.clear();
+            }
+
+            for (AbbreviationNode abbrNode : node.getAbbreviations()) {
+                visitChildren(abbrNode);
+                String abbr = printer.getString();
+                printer.clear();
+                abbrNode.getExpansion().accept(this);
+                String expansion = printer.getString();
+                abbreviations.put(abbr, expansion);
+                printer.clear();
+            }
+
+            visitChildren(node);
+
+            if (rootNodeRecursion == 1 && referencedFootnotes.size() > 0) {
+                Map<Integer, FootnoteNode> footnotes = new HashMap<Integer, FootnoteNode>();
+
+                for (FootnoteNode footnoteNode : node.getFootnotes()) {
+                    footnotes.put(referencedFootnotes.get(footnoteNode.getNumber()), footnoteNode);
+                }
+
+                printer.print("<div class=\"footnotes\">\n");
+                printer.print("<hr/>\n");
+                printer.print("<ol>\n");
+
+                for (int i = 0; i < referencedFootnotes.size(); i++) {
+                    int num = i + 1;
+                    if (!footnotes.containsKey(num)) {
+                        // empty footnote
+                        printer.print("<li id=\"fn-" + num + "\"><p><a href=\"#fnref-" + num + "\" class=\"footnote-backref\">&#8617;</a></p></li>\n");
+                    } else {
+                        printer.print("<li id=\"fn-" + num + "\"><p>");
+                        visitChildren((SuperNode) footnotes.get(num).getFootnote());
+                        printer.print("<a href=\"#fnref-" + num + "\" class=\"footnote-backref\">&#8617;</a></p>");
+                        printer.print("</li>\n");
+                    }
+                }
+
+                printer.print("</ol>\n");
+                printer.print("</div>\n");
+            }
+        } finally {
+            rootNodeRecursion--;
         }
-        for (AbbreviationNode abbrNode : node.getAbbreviations()) {
-            visitChildren(abbrNode);
-            String abbr = printer.getString();
-            printer.clear();
-            abbrNode.getExpansion().accept(this);
-            String expansion = printer.getString();
-            abbreviations.put(abbr, expansion);
-            printer.clear();
+    }
+
+    public void visit(FootnoteNode node) {
+        // this one we don't output for HTML, it is done at the bottom of the page
+    }
+
+    public void visit(FootnoteRefNode node) {
+        int footnote = node.getNumber();
+        int num = footnote;
+        if (!referencedFootnotes.containsKey(footnote)) {
+            num = referencedFootnotes.size() + 1;
+            referencedFootnotes.put(footnote, num);
+        } else {
+            num = referencedFootnotes.get(footnote);
         }
-        visitChildren(node);
+        printer.print("<sup id=\"fnref-" + num + "\"><a href=\"#fn-" + num + "\" class=\"footnote-ref\">" + num + "</a></sup>");
     }
 
     public void visit(AbbreviationNode node) {
@@ -450,7 +499,7 @@ public class ToHtmlSerializer implements Visitor {
         printer.print("<img");
         printAttribute("src", rendering.href);
         // shouldn't include the alt attribute if its empty
-        if(!rendering.text.equals("")){
+        if (!rendering.text.equals("")) {
             printAttribute("alt", rendering.text);
         }
         for (LinkRenderer.Attribute attr : rendering.attributes) {

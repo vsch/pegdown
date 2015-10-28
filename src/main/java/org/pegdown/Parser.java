@@ -21,7 +21,9 @@ package org.pegdown;
 import org.parboiled.BaseParser;
 import org.parboiled.Context;
 import org.parboiled.Rule;
-import org.parboiled.annotations.*;
+import org.parboiled.annotations.Cached;
+import org.parboiled.annotations.DontSkipActionsInPredicates;
+import org.parboiled.annotations.MemoMismatches;
 import org.parboiled.common.ArrayBuilder;
 import org.parboiled.common.ImmutableList;
 import org.parboiled.parserunners.ParseRunner;
@@ -31,24 +33,19 @@ import org.parboiled.support.StringBuilderVar;
 import org.parboiled.support.StringVar;
 import org.parboiled.support.Var;
 import org.pegdown.ast.*;
-import org.pegdown.ast.Node;
 import org.pegdown.ast.SimpleNode.Type;
 import org.pegdown.plugins.PegDownPlugins;
 
-import java.util.Set;
-import java.util.HashSet;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
-import static org.parboiled.errors.ErrorUtils.printParseErrors;
 import static org.parboiled.common.StringUtils.repeat;
+import static org.parboiled.errors.ErrorUtils.printParseErrors;
 
 /**
  * Parboiled parser for the standard and extended markdown syntax.
  * Builds an Abstract Syntax Tree (AST) of {@link Node} objects.
  */
-@SuppressWarnings( {"InfiniteRecursion"})
+@SuppressWarnings({ "InfiniteRecursion" })
 public class Parser extends BaseParser<Object> implements Extensions {
 
     protected static final char CROSSED_OUT = '\uffff';
@@ -69,6 +66,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
     protected final ParseRunnerProvider parseRunnerProvider;
     protected final PegDownPlugins plugins;
     final List<AbbreviationNode> abbreviations = new ArrayList<AbbreviationNode>();
+    final List<FootnoteNode> footnotes = new ArrayList<FootnoteNode>();
     final List<ReferenceNode> references = new ArrayList<ReferenceNode>();
     long parsingStartTimeStamp = 0L;
 
@@ -93,10 +91,12 @@ public class Parser extends BaseParser<Object> implements Extensions {
             RootNode root = parseInternal(source);
             root.setAbbreviations(ImmutableList.copyOf(abbreviations));
             root.setReferences(ImmutableList.copyOf(references));
+            root.setFootnotes(ImmutableList.copyOf(footnotes));
             return root;
         } finally {
             abbreviations.clear();
             references.clear();
+            footnotes.clear();
         }
     }
 
@@ -115,6 +115,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
                 FirstOf(new ArrayBuilder<Rule>()
                         .add(plugins.getBlockPluginRules())
                         .add(BlockQuote(), Verbatim())
+                        .addNonNulls(ext(FOOTNOTES) ? Footnote() : null)
                         .addNonNulls(ext(ABBREVIATIONS) ? Abbreviation() : null)
                         .add(Reference(), HorizontalRule(), Heading(), OrderedList(), BulletList(), HtmlBlock())
                         .addNonNulls(ext(TABLES) ? Table() : null)
@@ -133,7 +134,30 @@ public class Parser extends BaseParser<Object> implements Extensions {
                 // the input had no EOL's at the end at all, even then only one of these will be included
                 NonindentSpace(), Inlines(), push(new ParaNode(popAsNode())), Test(BlankLine())
 
+        );
+    }
 
+    //************* FOOTNOTES ********************
+
+    public Rule Footnote() {
+        Var<FootnoteNode> node = new Var<FootnoteNode>();
+        return Sequence(
+                NodeSequence(
+                        NonindentSpace(),
+                        Sequence(
+                                "[^", OneOrMore(Digit()), ']', Sp(), ':', Sp()
+                        ),
+                        push(node.setAndGet(new FootnoteNode(match()))),
+                        Inlines(),
+                        node.get().setFootnote(popAsNode())
+                ),
+                footnotes.add(node.get())
+        );
+    }
+
+    public Rule FootnoteRef() {
+        return NodeSequence(
+                Sequence("[^", OneOrMore(Digit()), ']'), push(new FootnoteRefNode(match()))
         );
     }
 
@@ -150,7 +174,6 @@ public class Parser extends BaseParser<Object> implements Extensions {
                                 TestNot(BlankLine()),
                                 Line(inner)
                         ),
-//                        ZeroOrMore(BlankLine()), inner.append(match())
                         Optional(Sequence(OneOrMore(BlankLine()), optional.append(match()), Test('>')), inner.append(optional.getString()) && optional.clearContents())
                 ),
 
@@ -174,7 +197,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
                         Indent(), push(currentIndex()),
                         OneOrMore(
                                 FirstOf(
-                                        Sequence('\t', line.append(repeat(' ', 4-(currentIndex()-1-(Integer)peek())%4))),
+                                        Sequence('\t', line.append(repeat(' ', 4 - (currentIndex() - 1 - (Integer) peek()) % 4))),
                                         Sequence(NotNewline(), ANY, line.append(matchedChar()))
                                 )
                         ),
@@ -383,7 +406,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
                         push(new SuperNode()),
                         OneOrMore(DefListTerm(), addAsChild()),
                         OneOrMore(Definition(), addAsChild()),
-                        ((SuperNode)peek(1)).getChildren().addAll(popAsNode().getChildren()),
+                        ((SuperNode) peek(1)).getChildren().addAll(popAsNode().getChildren()),
                         Optional(BlankLine())
                 )
         );
@@ -500,7 +523,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
                         fixFirstItem((SuperNode) peek(1)) &&
                                 push(itemNodeCreator.create(parseListBlock(block.appended('\n')))),
                 ZeroOrMore(
-//                        debugMsg("have a " + (tight.get() ? "tight" : "loose") + " list body at " + getContext().getCurrentIndex(), block.getString()),
+                        //debugMsg("have a " + (tight.get() ? "tight" : "loose") + " list body at " + getContext().getCurrentIndex(), block.getString()),
                         push(getContext().getCurrentIndex()),
                         // it is not safe to gobble up the leading blank line if it is followed by another list item
                         // it must be left for it to determine its own looseness. Much safer to just test for it but not consume it.
@@ -539,9 +562,9 @@ public class Parser extends BaseParser<Object> implements Extensions {
         return Sequence(
                 push(getContext().getCurrentIndex()),
                 FirstOf(CrossedOut(BlankLine(), block), tight.set(true)),
-                CrossedOut(itemStart, block), Optional(CrossedOut(Sequence(FirstOf(Sequence("[ ]", taskType.set(1)), Sequence(FirstOf("[x]","[X]"), taskType.set(2))), OneOrMore(Spacechar())), taskListMarker)),
+                CrossedOut(itemStart, block), Optional(CrossedOut(Sequence(FirstOf(Sequence("[ ]", taskType.set(1)), Sequence(FirstOf("[x]", "[X]"), taskType.set(2))), OneOrMore(Spacechar())), taskListMarker)),
                 block.append(taskListMarker.getString()), Line(block),
-//                debugMsg("have a " + taskType.get() + " task list body", block.getString()),
+                //debugMsg("have a " + taskType.get() + " task list body", block.getString()),
                 ZeroOrMore(
                         Optional(CrossedOut(Indent(), temp)),
                         TestNotItem(),
@@ -553,7 +576,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
                         fixFirstItem((SuperNode) peek(1)) &&
                                 push(itemNodeCreator.create(parseListBlock(block.appended('\n')), taskType.get(), taskListMarker.getString())) && taskListMarker.clearContents(),
                 ZeroOrMore(
-//                        debugMsg("have a " + (tight.get() ? "tight" : "loose") + " list body at " + getContext().getCurrentIndex(), block.getString()),
+                        //debugMsg("have a " + (tight.get() ? "tight" : "loose") + " list body at " + getContext().getCurrentIndex(), block.getString()),
                         push(getContext().getCurrentIndex()),
                         // it is not safe to gobble up the leading blank line if it is followed by another list item
                         // it must be left for it to determine its own looseness. Much safer to just test for it but not consume it.
@@ -630,9 +653,9 @@ public class Parser extends BaseParser<Object> implements Extensions {
     public Rule TestNotListItem() {
         return TestNot(
                 FirstOf(new ArrayBuilder<Rule>()
-                                .add(Bullet(), Enumerator())
-                                .addNonNulls(ext(DEFINITIONS) ? DefListBullet() : null)
-                                .get()
+                        .add(Bullet(), Enumerator())
+                        .addNonNulls(ext(DEFINITIONS) ? DefListBullet() : null)
+                        .get()
                 )
         );
     }
@@ -709,7 +732,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
         if (firstItemFirstChild.getChildren().size() == 1) {
             Node firstGrandChild = firstItemFirstChild.getChildren().get(0);
             if (firstGrandChild instanceof ListItemNode) {
-                wrapFirstItemInPara((SuperNode)firstGrandChild);
+                wrapFirstItemInPara((SuperNode) firstGrandChild);
             }
         }
         return item;
@@ -784,39 +807,39 @@ public class Parser extends BaseParser<Object> implements Extensions {
     }
 
     protected static final Set<String> HTML_TAGS = new HashSet<String>(Arrays.asList(
-        // https://developer.mozilla.org/en/docs/Web/HTML/Element
-        // Basic elements
-        "html",
-        // Document metadata
-        "base", "head", "link", "meta", "style", "title",
-        // Content sectioning
-        "address", "article", "aside", "body", "footer", "header", "h1", "h2", "h3", "h4", "h5", "h6", "hgroup", "nav", "section",
-        // Text bontent
-        "dd", "div", "dl", "dt", "figcaption", "figure", "hr", "li", "main", "ol", "p", "pre", "ul",
-        // Inline text semantics
-        // "abbr" not included, breaks some tests
-        "a", "b", "bdi", "bdo", "br", "cite", "code", "data", "dfn", "em", "i", "kbd", "mark", "q", "rp", "rt",
-        "rtc", "ruby", "s", "samp", "small", "span", "strong", "sub", "sup", "time", "u", "var", "wbr",
-        // Image & multimedia
-        "area", "audio", "img", "map", "track", "video",
-        // Embedded content
-        "embed", "iframe", "object", "param", "source",
-        // Scripting
-        "canvas", "noscript", "script",
-        // Edits
-        "del", "ins",
-        // Table content
-        "caption", "col", "colgroup", "table", "tbody", "td", "tfoot", "th", "thead", "tr",
-        // Forms
-        "button", "datalist", "fieldset", "form", "input", "keygen", "label", "legend", "meter",
-        "optgroup", "option", "output", "progress", "select", "textarea",
-        // Interactive elements
-        "details", "dialog", "menu", "menuitem", "summary",
-        // Web Components
-        "content", "decorator", "element", "shadow", "template",
-        // Obsolete and deprecated elements
-        "acronym", "applet", "basefont", "big", "blink", "center", "dir", "frame", "frameset",
-        "isindex", "listing", "noembed", "plaintext", "spacer", "strike", "tt", "xmp"
+            // https://developer.mozilla.org/en/docs/Web/HTML/Element
+            // Basic elements
+            "html",
+            // Document metadata
+            "base", "head", "link", "meta", "style", "title",
+            // Content sectioning
+            "address", "article", "aside", "body", "footer", "header", "h1", "h2", "h3", "h4", "h5", "h6", "hgroup", "nav", "section",
+            // Text bontent
+            "dd", "div", "dl", "dt", "figcaption", "figure", "hr", "li", "main", "ol", "p", "pre", "ul",
+            // Inline text semantics
+            // "abbr" not included, breaks some tests
+            "a", "b", "bdi", "bdo", "br", "cite", "code", "data", "dfn", "em", "i", "kbd", "mark", "q", "rp", "rt",
+            "rtc", "ruby", "s", "samp", "small", "span", "strong", "sub", "sup", "time", "u", "var", "wbr",
+            // Image & multimedia
+            "area", "audio", "img", "map", "track", "video",
+            // Embedded content
+            "embed", "iframe", "object", "param", "source",
+            // Scripting
+            "canvas", "noscript", "script",
+            // Edits
+            "del", "ins",
+            // Table content
+            "caption", "col", "colgroup", "table", "tbody", "td", "tfoot", "th", "thead", "tr",
+            // Forms
+            "button", "datalist", "fieldset", "form", "input", "keygen", "label", "legend", "meter",
+            "optgroup", "option", "output", "progress", "select", "textarea",
+            // Interactive elements
+            "details", "dialog", "menu", "menuitem", "summary",
+            // Web Components
+            "content", "decorator", "element", "shadow", "template",
+            // Obsolete and deprecated elements
+            "acronym", "applet", "basefont", "big", "blink", "center", "dir", "frame", "frameset",
+            "isindex", "listing", "noembed", "plaintext", "spacer", "strike", "tt", "xmp"
     ));
 
     //************* INLINES ****************
@@ -853,9 +876,10 @@ public class Parser extends BaseParser<Object> implements Extensions {
                 .add(plugins.getInlinePluginRules())
                 .add(Str(), Endline(), UlOrStarLine(), Space(), StrongOrEmph(), Image(), Code(), InlineHtml(),
                         Entity(), EscapedChar())
-                .addNonNulls(ext(QUOTES) ? new Rule[]{SingleQuoted(), DoubleQuoted(), DoubleAngleQuoted()} : null)
-                .addNonNulls(ext(SMARTS) ? new Rule[]{Smarts()} : null)
-                .addNonNulls(ext(STRIKETHROUGH) ? new Rule[]{Strike()} : null)
+                .addNonNulls(ext(QUOTES) ? new Rule[] { SingleQuoted(), DoubleQuoted(), DoubleAngleQuoted() } : null)
+                .addNonNulls(ext(SMARTS) ? new Rule[] { Smarts() } : null)
+                .addNonNulls(ext(STRIKETHROUGH) ? new Rule[] { Strike() } : null)
+                .addNonNulls(ext(FOOTNOTES) ? new Rule[] { FootnoteRef() } : null)
                 .add(Symbol())
                 .get()
         );
@@ -916,11 +940,11 @@ public class Parser extends BaseParser<Object> implements Extensions {
     }
 
     public Rule Emph() {
-        return NodeSequence( FirstOf( EmphOrStrong("*"), EmphOrStrong("_") ) );
+        return NodeSequence(FirstOf(EmphOrStrong("*"), EmphOrStrong("_")));
     }
 
     public Rule Strong() {
-        return NodeSequence( FirstOf( EmphOrStrong("**"), EmphOrStrong("__") ) );
+        return NodeSequence(FirstOf(EmphOrStrong("**"), EmphOrStrong("__")));
     }
 
     // vsch: TODO: test for unclosed strikethrough sequence carrying through the isClosed attribute, as soon as I can figure out how
@@ -994,16 +1018,16 @@ public class Parser extends BaseParser<Object> implements Extensions {
      * Emph only allows Strong as direct child, Strong only allows Emph as
      * direct child.
      */
-    protected boolean mayEnterEmphOrStrong(String chars){
-    	if( !isLegalEmphOrStrongStartPos() ){
+    protected boolean mayEnterEmphOrStrong(String chars) {
+        if (!isLegalEmphOrStrongStartPos()) {
             return false;
         }
 
         Object parent = peek(2);
-        boolean isStrong = ( chars.length()==2 );
+        boolean isStrong = (chars.length() == 2);
 
-        if( StrongEmphSuperNode.class.equals( parent.getClass() ) ){
-            if( ((StrongEmphSuperNode) parent).isStrong() == isStrong )
+        if (StrongEmphSuperNode.class.equals(parent.getClass())) {
+            if (((StrongEmphSuperNode) parent).isStrong() == isStrong)
                 return false;
         }
         return true;
@@ -1013,33 +1037,33 @@ public class Parser extends BaseParser<Object> implements Extensions {
      * This method checks if current position is a legal start position for a
      * strong or emph sequence by checking the last parsed character(-sequence).
      */
-    protected boolean isLegalEmphOrStrongStartPos(){
-        if( currentIndex() == 0 )
+    protected boolean isLegalEmphOrStrongStartPos() {
+        if (currentIndex() == 0)
             return true;
 
         Object lastItem = peek(1);
         Class<?> lastClass = lastItem.getClass();
 
         SuperNode supernode;
-        while( SuperNode.class.isAssignableFrom(lastClass) ) {
+        while (SuperNode.class.isAssignableFrom(lastClass)) {
             supernode = (SuperNode) lastItem;
 
-            if(supernode.getChildren().size() < 1 )
+            if (supernode.getChildren().size() < 1)
                 return true;
 
-            lastItem = supernode.getChildren().get( supernode.getChildren().size()-1 );
+            lastItem = supernode.getChildren().get(supernode.getChildren().size() - 1);
             lastClass = lastItem.getClass();
         }
 
-        return     ( TextNode.class.equals(lastClass) && ( (TextNode) lastItem).getText().endsWith(" ") )
-                || ( SimpleNode.class.equals(lastClass) )
-                || ( java.lang.Integer.class.equals(lastClass) );
+        return (TextNode.class.equals(lastClass) && ((TextNode) lastItem).getText().endsWith(" "))
+                || (SimpleNode.class.equals(lastClass))
+                || (java.lang.Integer.class.equals(lastClass));
     }
 
     /**
      * Mark the current StrongEmphSuperNode as closed sequence
      */
-    protected boolean setClosed(){
+    protected boolean setClosed() {
         StrongEmphSuperNode node = (StrongEmphSuperNode) peek();
         node.setClosed(true);
         return true;
@@ -1051,20 +1075,20 @@ public class Parser extends BaseParser<Object> implements Extensions {
      * is true, a next test should check if the closing character(s) of the child should become (part of) the
      * closing character(s) of the parent.
      */
-    protected boolean isStrongCloseCharStolen( String chars ){
-        if(chars.length() < 2 )
+    protected boolean isStrongCloseCharStolen(String chars) {
+        if (chars.length() < 2)
             return false;
 
         Object childClass = peek().getClass();
 
         //checks if last `inline` to be added as child is not a StrongEmphSuperNode
         //that eats up a closing character for the parent StrongEmphSuperNode
-        if( StrongEmphSuperNode.class.equals( childClass ) ){
+        if (StrongEmphSuperNode.class.equals(childClass)) {
             StrongEmphSuperNode child = (StrongEmphSuperNode) peek();
             if (!child.isClosed())
                 return false;
 
-            if( child.getChars().endsWith( chars.substring(0, 1) ) ){
+            if (child.getChars().endsWith(chars.substring(0, 1))) {
                 //The nested child ends with closing char for the parent, allow stealing it back
                 return true;
             }
@@ -1076,7 +1100,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
     /**
      * Steals the last close char by marking a previously closed emph/strong node as unclosed.
      */
-    protected boolean stealBackStrongCloseChar(){
+    protected boolean stealBackStrongCloseChar() {
         StrongEmphSuperNode child = (StrongEmphSuperNode) peek();
         child.setClosed(false);
         addAsChild();
@@ -1089,27 +1113,25 @@ public class Parser extends BaseParser<Object> implements Extensions {
      * This method checks if the last parsed character or sequence is a valid prefix for a closing char for
      * an emph or strong sequence.
      */
-    protected boolean isLegalEmphOrStrongClosePos(){
+    protected boolean isLegalEmphOrStrongClosePos() {
         Object lastItem = peek();
-        if ( StrongEmphSuperNode.class.equals( lastItem.getClass() ) ){
+        if (StrongEmphSuperNode.class.equals(lastItem.getClass())) {
             List<Node> children = ((StrongEmphSuperNode) lastItem).getChildren();
 
-            if(children.size() < 1)
+            if (children.size() < 1)
                 return true;
 
-            lastItem = children.get( children.size()-1 );
+            lastItem = children.get(children.size() - 1);
             Class<?> lastClass = lastItem.getClass();
 
-            if( TextNode.class.equals(lastClass) )
+            if (TextNode.class.equals(lastClass))
                 return !((TextNode) lastItem).getText().endsWith(" ");
 
-            if( SimpleNode.class.equals(lastClass) )
+            if (SimpleNode.class.equals(lastClass))
                 return !((SimpleNode) lastItem).getType().equals(SimpleNode.Type.Linebreak);
-
         }
         return true;
     }
-
 
     //************* LINKS ****************
 
@@ -1124,7 +1146,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
     public Rule Link() {
         return NodeSequence(
                 FirstOf(new ArrayBuilder<Rule>()
-                        .addNonNulls(ext(WIKILINKS) ? new Rule[]{WikiLink()} : null)
+                        .addNonNulls(ext(WIKILINKS) ? new Rule[] { WikiLink() } : null)
                         .add(Sequence(Label(), FirstOf(ExplicitLink(false), ReferenceLink(false))))
                         .add(AutoLink())
                         .get()
@@ -1163,8 +1185,8 @@ public class Parser extends BaseParser<Object> implements Extensions {
                         Sequence(push(null), push(null)) // implicit referencelink without trailing []
                 ),
                 push(image ?
-                  new RefImageNode((SuperNode)popAsNode(), popAsString(), popAsNode()) :
-                  new RefLinkNode((SuperNode)popAsNode(), popAsString(), popAsNode())
+                        new RefImageNode((SuperNode) popAsNode(), popAsString(), popAsNode()) :
+                        new RefLinkNode((SuperNode) popAsNode(), popAsString(), popAsNode())
                 )
         );
     }
@@ -1211,10 +1233,10 @@ public class Parser extends BaseParser<Object> implements Extensions {
 
     public Rule WikiLink() {
         return Sequence(
-            "[[",
-            OneOrMore(TestNot(Sequence(']',']')), ANY), // might have to restrict from ANY
-            push(new WikiLinkNode(match())),
-            "]]"
+                "[[",
+                OneOrMore(TestNot(Sequence(']', ']')), ANY), // might have to restrict from ANY
+                push(new WikiLinkNode(match())),
+                "]]"
         );
     }
 
@@ -1250,7 +1272,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
     //************* REFERENCE ****************
 
     // can't treat labels the same as the image alt since the image alt should be able to empty.
-    public Rule ImageAlt(){
+    public Rule ImageAlt() {
         return Sequence(
                 '[',
                 checkForParsingTimeout(),
@@ -1263,6 +1285,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
     public Rule Label() {
         return Sequence(
                 '[',
+                (ext(FOOTNOTES) ? TestNot('^', OneOrMore(Digit()), ']') : EMPTY),
                 checkForParsingTimeout(),
                 push(new SuperNode()),
                 OneOrMore(TestNot(']'), NonAutoLinkInline(), addAsChild()),
@@ -1475,6 +1498,9 @@ public class Parser extends BaseParser<Object> implements Extensions {
         if (ext(DEFINITIONS)) {
             chars += ":";
         }
+        if (ext(FOOTNOTES)) {
+            chars += "^";
+        }
         if (ext(TABLES)) {
             chars += "|";
         }
@@ -1506,6 +1532,9 @@ public class Parser extends BaseParser<Object> implements Extensions {
         }
         if (ext(DEFINITIONS)) {
             chars += ":";
+        }
+        if (ext(FOOTNOTES)) {
+            chars += "^";
         }
         if (ext(TABLES)) {
             chars += "|";
@@ -1602,7 +1631,9 @@ public class Parser extends BaseParser<Object> implements Extensions {
 
     public Rule TableCaption() {
         return Sequence(
-                '[', Sp(),
+                '[',
+                (ext(FOOTNOTES) ? TestNot('^', OneOrMore(Digit()), ']') : EMPTY),
+                Sp(),
                 CaptionStart(),
                 Optional(Sp(), Optional(']'), Sp()),
                 Newline()
@@ -1781,7 +1812,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
 
     public boolean setIndices() {
         AbstractNode node = (AbstractNode) peek();
-        node.setStartIndex((Integer)pop(1));
+        node.setStartIndex((Integer) pop(1));
         node.setEndIndex(currentIndex());
         return true;
     }
@@ -1881,5 +1912,4 @@ public class Parser extends BaseParser<Object> implements Extensions {
     protected interface SuperNodeTaskItemCreator extends SuperNodeCreator {
         SuperNode create(Node child, int taskType, String taskListMarker);
     }
-
 }

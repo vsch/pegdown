@@ -33,7 +33,53 @@ Currently _pegdown_ supports the following extensions over standard Markdown:
     * Spaces and non-alphanumerics replaced by `-`, multiple dashes trimmed to one.
     * Anchor link is added as first element inside the header with empty content: `<h1><a name="header"></a>header</h1>`
 * EXTANCHORLINKS_WRAP: used in conjunction with above to create an anchor that wraps header content: `<h1><a name="header">header</a></h1>` 
-                        
+* FOOTNOTES: Support PHP Markdown Extra style footnotes: `[^n] for footnote reference` and `[^n]: Footnote text` for footnotes. Where `n` is one or more digits. Footnotes will be put at the bottom of the page, sequentially numbered in order of appearance of the footnote reference. Footnotes that are not referenced will NOT be included in the HTML output.  
+
+    ```markdown
+    This paragraph has a footnote[^1] and another footnote[^2].
+    
+    This one has more but out of sequence[^4] and [^8]. 
+    
+    [^2]: Footnote 2 with a bit more text
+        and another continuation line
+        
+    [^1]: Footnote 1
+    
+    [^3]: Unused footnote, it will not be added to the end of the page.
+    
+    [^4]: Out of sequence footnote
+    
+    [^8]: Have one that is used.
+    ```                        
+    
+    will generate:
+    
+    ```html
+    <p>This paragraph has a footnote<sup id="fnref-1"><a href="#fn-1" class="footnote-ref">1</a></sup> and another footnote<sup id="fnref-2"><a href="#fn-2" class="footnote-ref">2</a></sup>.</p>
+    <p>This one has more but out of sequence<sup id="fnref-3"><a href="#fn-3" class="footnote-ref">3</a></sup> and <sup id="fnref-4"><a href="#fn-4" class="footnote-ref">4</a></sup>. </p><div class="footnotes">
+    <hr/>
+    <ol>
+    <li id="fn-1"><p>Footnote 1<a href="#fnref-1" class="footnote-backref">&#8617;</a></p></li>
+    <li id="fn-2"><p>Footnote 2 with a bit more text  and another continuation line<a href="#fnref-2" class="footnote-backref">&#8617;</a></p></li>
+    <li id="fn-3"><p>Out of sequence footnote<a href="#fnref-3" class="footnote-backref">&#8617;</a></p></li>
+    <li id="fn-4"><p>Have one that is used.<a href="#fnref-4" class="footnote-backref">&#8617;</a></p></li>
+    </ol>
+    </div>
+    ```
+    to look like this:
+    
+<p>This paragraph has a footnote<sup id="fnref-1"><a href="#fn-1" class="footnote-ref">1</a></sup> and another footnote<sup id="fnref-2"><a href="#fn-2" class="footnote-ref">2</a></sup>.</p>
+<p>This one has more but out of sequence<sup id="fnref-3"><a href="#fn-3" class="footnote-ref">3</a></sup> and <sup id="fnref-4"><a href="#fn-4" class="footnote-ref">4</a></sup>. </p><div class="footnotes">
+<hr/>
+<ol>
+<li id="fn-1"><p>Footnote 1<a href="#fnref-1" class="footnote-backref">&#8617;</a></p></li>
+<li id="fn-2"><p>Footnote 2 with a bit more text  and another continuation line<a href="#fnref-2" class="footnote-backref">&#8617;</a></p></li>
+<li id="fn-3"><p>Out of sequence footnote<a href="#fnref-3" class="footnote-backref">&#8617;</a></p></li>
+<li id="fn-4"><p>Have one that is used.<a href="#fnref-4" class="footnote-backref">&#8617;</a></p></li>
+</ol>
+</div>
+
+    
 Note: _pegdown_ differs from the original Markdown in that it ignores in-word emphasis as in
 
     > my_cool_file.txt

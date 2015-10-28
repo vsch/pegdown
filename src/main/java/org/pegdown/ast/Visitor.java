@@ -28,6 +28,8 @@ public interface Visitor {
     void visit(DefinitionListNode node);
     void visit(DefinitionNode node);
     void visit(DefinitionTermNode node);
+    void visit(FootnoteNode node);
+    void visit(FootnoteRefNode node);
     void visit(ExpImageNode node);
     void visit(ExpLinkNode node);
     void visit(HeaderNode node);

@@ -145,7 +145,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
                 NodeSequence(
                         NonindentSpace(),
                         Sequence(
-                                "[^", OneOrMore(Digit()), ']', Sp(), ':', Sp()
+                                FootnoteLabel(), Sp(), ':', Sp()
                         ),
                         push(node.setAndGet(new FootnoteNode(match()))),
                         Inlines(),
@@ -157,8 +157,12 @@ public class Parser extends BaseParser<Object> implements Extensions {
 
     public Rule FootnoteRef() {
         return NodeSequence(
-                Sequence("[^", OneOrMore(Digit()), ']'), push(new FootnoteRefNode(match()))
+                FootnoteLabel(), push(new FootnoteRefNode(match()))
         );
+    }
+
+    public Rule FootnoteLabel() {
+        return Sequence("[^", OneOrMore(AlphanumericDashUnderDot()), ']');
     }
 
     // vsch: #184 modified to only include trailing blank lines if there are more blocks for the blockquote following
@@ -1285,7 +1289,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
     public Rule Label() {
         return Sequence(
                 '[',
-                (ext(FOOTNOTES) ? TestNot('^', OneOrMore(Digit()), ']') : EMPTY),
+                (ext(FOOTNOTES) ? TestNot('^') : EMPTY),
                 checkForParsingTimeout(),
                 push(new SuperNode()),
                 OneOrMore(TestNot(']'), NonAutoLinkInline(), addAsChild()),
@@ -1572,6 +1576,10 @@ public class Parser extends BaseParser<Object> implements Extensions {
         return FirstOf(Letter(), Digit());
     }
 
+    public Rule AlphanumericDashUnderDot() {
+        return FirstOf(Letter(), Digit(), '-', '_', '.');
+    }
+
     public Rule Letter() {
         return FirstOf(CharRange('a', 'z'), CharRange('A', 'Z'));
     }
@@ -1632,7 +1640,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
     public Rule TableCaption() {
         return Sequence(
                 '[',
-                (ext(FOOTNOTES) ? TestNot('^', OneOrMore(Digit()), ']') : EMPTY),
+                (ext(FOOTNOTES) ? TestNot('^') : EMPTY),
                 Sp(),
                 CaptionStart(),
                 Optional(Sp(), Optional(']'), Sp()),

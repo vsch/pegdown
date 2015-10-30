@@ -19,16 +19,16 @@
 package org.pegdown.ast;
 
 public class FootnoteNode extends TextNode {
-    private int number;
+    private String label;
     private Node footnote;
 
     public FootnoteNode(String text) {
         super(text);
-        this.number = Integer.parseInt(text.substring(2, text.indexOf(']')));
+        this.label = text.substring(2, text.indexOf(']'));
     }
 
-    public int getNumber() {
-        return number;
+    public String getLabel() {
+        return label;
     }
 
     public Node getFootnote() {

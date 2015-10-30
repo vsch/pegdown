@@ -33,14 +33,14 @@ Currently _pegdown_ supports the following extensions over standard Markdown:
     * Spaces and non-alphanumerics replaced by `-`, multiple dashes trimmed to one.
     * Anchor link is added as first element inside the header with empty content: `<h1><a name="header"></a>header</h1>`
 * EXTANCHORLINKS_WRAP: used in conjunction with above to create an anchor that wraps header content: `<h1><a name="header">header</a></h1>` 
-* FOOTNOTES: Support PHP Markdown Extra style footnotes: `[^n] for footnote reference` and `[^n]: Footnote text` for footnotes. Where `n` is one or more digits. Footnotes will be put at the bottom of the page, sequentially numbered in order of appearance of the footnote reference. Footnotes that are not referenced will NOT be included in the HTML output.  
+* FOOTNOTES: Support PHP Markdown Extra style footnotes: `[^n] for footnote reference` and `[^n]: Footnote text` for footnotes. Where `n` is one or more digit, letter, `-`, `_` or `.`. Footnotes will be put at the bottom of the page, sequentially numbered in order of appearance of the footnote reference. Footnotes that are not referenced will NOT be included in the HTML output.  
 
     ```markdown
-    This paragraph has a footnote[^1] and another footnote[^2].
+    This paragraph has a footnote[^1] and another footnote[^two].
     
-    This one has more but out of sequence[^4] and[^8]. 
+    This one has more but out of sequence[^4] and[^eight]. 
     
-    [^2]: Footnote 2 with a bit more text
+    [^two]: Footnote 2 with a bit more text
         and another continuation line
         
     [^1]: Footnote 1
@@ -49,7 +49,7 @@ Currently _pegdown_ supports the following extensions over standard Markdown:
     
     [^4]: Out of sequence footnote
     
-    [^8]: Have one that is used.
+    [^eight]: Have one that is used.
     ```                        
     
     will generate:

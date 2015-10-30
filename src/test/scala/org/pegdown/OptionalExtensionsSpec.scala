@@ -86,7 +86,7 @@ class OptionalExtensionsSpec extends AbstractPegDownSpec {
         testAlt("OptionalExtensions/footnotes", "-no-ext")
       }
 
-      "footnotes-ext AST" in {
+      "footnotes-no-ext AST" in {
         implicit val processor = new PegDownProcessor(ALL)
         testASTAlt("OptionalExtensions/footnotes", "-no-ext")
       }

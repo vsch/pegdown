@@ -1,63 +1,75 @@
-RootNode [0-340]
-  ParaNode [0-59]
-    SuperNode [0-59]
+RootNode [0-403]
+  ParaNode [0-61]
+    SuperNode [0-61]
       TextNode [0-29] 'This paragraph has a footnote'
       RefLinkNode [29-33]
         SuperNode [0-0]
           TextNode [30-32] '^1'
       TextNode [33-54] ' and another footnote'
-      RefLinkNode [54-58]
+      RefLinkNode [54-60]
         SuperNode [0-0]
-          TextNode [55-57] '^2'
-      SpecialTextNode [58-59] '.'
-  ParaNode [61-113]
-    SuperNode [61-113]
-      TextNode [61-98] 'This one has more but out of sequence'
-      RefLinkNode [98-102]
+          TextNode [55-59] '^two'
+      SpecialTextNode [60-61] '.'
+  ParaNode [63-119]
+    SuperNode [63-119]
+      TextNode [63-100] 'This one has more but out of sequence'
+      RefLinkNode [100-104]
         SuperNode [0-0]
-          TextNode [99-101] '^4'
-      TextNode [102-107] ' and '
-      RefLinkNode [107-111]
+          TextNode [101-103] '^4'
+      TextNode [104-109] ' and '
+      RefLinkNode [109-117]
         SuperNode [0-0]
-          TextNode [108-110] '^8'
-      SpecialTextNode [111-112] '.'
-      TextNode [112-113] ' '
-  ParaNode [116-187]
-    SuperNode [116-187]
-      RefLinkNode [116-120]
+          TextNode [110-116] '^eight'
+      SpecialTextNode [117-118] '.'
+      TextNode [118-119] ' '
+  ParaNode [122-195]
+    SuperNode [122-195]
+      RefLinkNode [122-128]
         SuperNode [0-0]
-          TextNode [117-119] '^2'
-      SpecialTextNode [120-121] ':'
-      TextNode [121-153] ' Footnote 2 with a bit more text'
-      SimpleNode [153-154] Linebreak
-      TextNode [154-187] ' and another continuation line'
-  ParaNode [193-209]
-    SuperNode [193-209]
-      RefLinkNode [193-197]
+          TextNode [123-127] '^two'
+      SpecialTextNode [128-129] ':'
+      TextNode [129-161] ' Footnote 2 with a bit more text'
+      SimpleNode [161-162] Linebreak
+      TextNode [162-195] ' and another continuation line'
+  ParaNode [201-217]
+    SuperNode [201-217]
+      RefLinkNode [201-205]
         SuperNode [0-0]
-          TextNode [194-196] '^1'
-      SpecialTextNode [197-198] ':'
-      TextNode [198-209] ' Footnote 1'
-  ParaNode [211-278]
-    SuperNode [211-278]
-      RefLinkNode [211-215]
+          TextNode [202-204] '^1'
+      SpecialTextNode [205-206] ':'
+      TextNode [206-217] ' Footnote 1'
+  ParaNode [219-292]
+    SuperNode [219-292]
+      RefLinkNode [219-229]
         SuperNode [0-0]
-          TextNode [212-214] '^3'
-      SpecialTextNode [215-216] ':'
-      TextNode [216-277] ' Unused footnote, it will not be added to the end of the page'
-      SpecialTextNode [277-278] '.'
-  ParaNode [280-310]
-    SuperNode [280-310]
-      RefLinkNode [280-284]
+          TextNode [220-223] '^un'
+          SpecialTextNode [223-224] '-'
+          TextNode [224-228] 'used'
+      SpecialTextNode [229-230] ':'
+      TextNode [230-291] ' Unused footnote, it will not be added to the end of the page'
+      SpecialTextNode [291-292] '.'
+  ParaNode [294-324]
+    SuperNode [294-324]
+      RefLinkNode [294-298]
         SuperNode [0-0]
-          TextNode [281-283] '^4'
-      SpecialTextNode [284-285] ':'
-      TextNode [285-310] ' Out of sequence footnote'
-  ParaNode [312-340]
-    SuperNode [312-340]
-      RefLinkNode [312-316]
+          TextNode [295-297] '^4'
+      SpecialTextNode [298-299] ':'
+      TextNode [299-324] ' Out of sequence footnote'
+  ParaNode [326-358]
+    SuperNode [326-358]
+      RefLinkNode [326-334]
         SuperNode [0-0]
-          TextNode [313-315] '^8'
-      SpecialTextNode [316-317] ':'
-      TextNode [317-339] ' Have one that is used'
-      SpecialTextNode [339-340] '.'
+          TextNode [327-333] '^eight'
+      SpecialTextNode [334-335] ':'
+      TextNode [335-357] ' Have one that is used'
+      SpecialTextNode [357-358] '.'
+  ParaNode [360-403]
+    SuperNode [360-403]
+      RefLinkNode [360-377]
+        SuperNode [0-0]
+          TextNode [361-369] '^another'
+          SpecialTextNode [369-370] '_'
+          TextNode [370-376] 'unused'
+      SpecialTextNode [377-378] ':'
+      TextNode [378-402] ' This will not be output'
+      SpecialTextNode [402-403] '.'

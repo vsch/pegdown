@@ -40,7 +40,7 @@ public class ToHtmlSerializer implements Visitor {
     protected int rootNodeRecursion = 0;
 
     protected Map<String, VerbatimSerializer> verbatimSerializers;
-    protected Map<Integer, Integer> referencedFootnotes = new HashMap<Integer, Integer>();
+    protected Map<String, Integer> referencedFootnotes = new HashMap<String, Integer>();
 
     public ToHtmlSerializer(LinkRenderer linkRenderer) {
         this(linkRenderer, Collections.<ToHtmlSerializerPlugin>emptyList());
@@ -94,7 +94,7 @@ public class ToHtmlSerializer implements Visitor {
                 Map<Integer, FootnoteNode> footnotes = new HashMap<Integer, FootnoteNode>();
 
                 for (FootnoteNode footnoteNode : node.getFootnotes()) {
-                    footnotes.put(referencedFootnotes.get(footnoteNode.getNumber()), footnoteNode);
+                    footnotes.put(referencedFootnotes.get(footnoteNode.getLabel()), footnoteNode);
                 }
 
                 printer.print("<div class=\"footnotes\">\n");
@@ -127,10 +127,10 @@ public class ToHtmlSerializer implements Visitor {
     }
 
     public void visit(FootnoteRefNode node) {
-        int footnote = node.getNumber();
-        int num = footnote;
+        String footnote = node.getLabel();
+        int num = referencedFootnotes.size() + 1;
+
         if (!referencedFootnotes.containsKey(footnote)) {
-            num = referencedFootnotes.size() + 1;
             referencedFootnotes.put(footnote, num);
         } else {
             num = referencedFootnotes.get(footnote);

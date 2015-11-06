@@ -184,7 +184,11 @@ public class ToHtmlSerializer implements Visitor {
     }
 
     public void visit(HeaderNode node) {
-        printBreakBeforeTag(node, "h" + node.getLevel());
+        if (node.isToc()) {
+            printBreakBeforeTagWithId(node, "h" + node.getLevel(), node.getId());
+        } else {
+            printBreakBeforeTag(node, "h" + node.getLevel());
+        }
     }
 
     public void visit(HtmlBlockNode node) {
@@ -397,6 +401,51 @@ public class ToHtmlSerializer implements Visitor {
         printIndentedTag(node, "tr");
     }
 
+
+    public void visit(TocNode node) {
+
+        if (!node.getHeaders().isEmpty()) {
+            int initLevel = node.getHeaders().get(0).getLevel();
+            int lastLevel = node.getHeaders().get(0).getLevel();
+
+            printer.println().print("<ul>").println();
+
+            for (int i = 0 ; i < node.getHeaders().size(); ++i) {
+
+                HeaderNode header = node.getHeaders().get(i);
+
+                // ignore the level less than toc limit
+                if (header.getLevel() > node.getLevel()) {
+                    continue;
+                }
+
+                if (lastLevel < header.getLevel()) {
+                    for (int lv = lastLevel; lv < header.getLevel(); ++lv) {
+                        printer.print("<ul>").println();
+                    }
+                } else if (lastLevel == header.getLevel()) {
+                    if (i != 0) {
+                        printer.print("</li>").println();
+                    }
+                } else {
+                    printer.print("</li>").println();
+                    for (int lv = header.getLevel(); lv < lastLevel; ++lv) {
+                        printer.print("</ul></li>").println();
+                    }
+                }
+
+                printer.print("<li><a href=\"#").print(header.getId()).print("\">").print(header.getText()).print("</a>");
+
+                lastLevel = header.getLevel();
+            }
+            for (int i = initLevel - 1; i < lastLevel; ++i) {
+                printer.print("</li></ul>").println();
+            }
+
+            printer.println();
+        }
+    }
+
     public void visit(VerbatimNode node) {
         VerbatimSerializer serializer = lookupSerializer(node.getType());
         serializer.serialize(node, printer);
@@ -472,6 +521,18 @@ public class ToHtmlSerializer implements Visitor {
         boolean startWasNewLine = printer.endsWithNewLine();
         printer.println();
         printTag(node, tag);
+        if (startWasNewLine) printer.println();
+    }
+
+    protected void printBreakBeforeTagWithId(SuperNode node, String tag, String id) {
+        boolean startWasNewLine = printer.endsWithNewLine();
+        printer.println();
+        printer.print("<").print(tag);
+        printAttribute("id", id);
+        printer.print(">");
+        visitChildren(node);
+        printer.print('<').print('/').print(tag).print('>');
+
         if (startWasNewLine) printer.println();
     }
 

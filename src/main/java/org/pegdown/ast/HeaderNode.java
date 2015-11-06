@@ -23,23 +23,27 @@ import org.parboiled.common.Preconditions;
 public class HeaderNode extends SuperNode {
     private final int level;
     private final boolean isSetext;
+    private final boolean toc;
 
-    public HeaderNode(int level, Node child) {
-        super(child);
-        this.level = level;
-        this.isSetext = false;
-    }
-
-    public HeaderNode(int level, Node child, boolean isSetext) {
-        super(child);
-        this.level = level;
-        this.isSetext = isSetext;
-    }
-
-    public HeaderNode(int level) {
+    public HeaderNode(int level, boolean toc) {
         Preconditions.checkState(1 <= level && level <= 6);
         this.level = level;
         this.isSetext = false;
+        this.toc = toc;
+    }
+
+    public HeaderNode(int level, boolean toc, Node child) {
+        super(child);
+        this.level = level;
+        this.toc = toc;
+        this.isSetext = false;
+    }
+
+    public HeaderNode(int level, boolean toc, Node child, boolean isSetext) {
+        super(child);
+        this.level = level;
+        this.toc = toc;
+        this.isSetext = isSetext;
     }
 
     public int getLevel() {
@@ -49,6 +53,19 @@ public class HeaderNode extends SuperNode {
     public boolean isSetext() {
         return isSetext;
     }
+
+    public boolean isToc() {
+        return toc;
+    }
+
+    public String getId() {
+        return ((TextNode) getChildren().get(0)).getText().toLowerCase().replaceAll("\\s", "");
+    }
+
+    public String getText() {
+        return ((TextNode) getChildren().get(0)).getText();
+    }
+
 
     @Override
     public void accept(Visitor visitor) {

@@ -26,6 +26,7 @@ import org.parboiled.annotations.DontSkipActionsInPredicates;
 import org.parboiled.annotations.MemoMismatches;
 import org.parboiled.common.ArrayBuilder;
 import org.parboiled.common.ImmutableList;
+import org.parboiled.common.Reference;
 import org.parboiled.parserunners.ParseRunner;
 import org.parboiled.parserunners.ReportingParseRunner;
 import org.parboiled.support.ParsingResult;
@@ -68,6 +69,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
     final List<AbbreviationNode> abbreviations = new ArrayList<AbbreviationNode>();
     final List<FootnoteNode> footnotes = new ArrayList<FootnoteNode>();
     final List<ReferenceNode> references = new ArrayList<ReferenceNode>();
+    final List<HeaderNode> headers = new ArrayList<HeaderNode>();
     long parsingStartTimeStamp = 0L;
 
     public boolean debugMsg(String msg, String text) {
@@ -121,6 +123,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
                         .addNonNulls(ext(TABLES) ? Table() : null)
                         .addNonNulls(ext(DEFINITIONS) ? DefinitionList() : null)
                         .addNonNulls(ext(FENCED_CODE_BLOCKS) ? FencedCodeBlock() : null)
+                        .addNonNulls(ext(TOC) ? Toc() : null)
                         .add(Para(), Inlines())
                         .get()
                 )
@@ -275,9 +278,12 @@ public class Parser extends BaseParser<Object> implements Extensions {
     }
 
     public Rule AtxStart() {
+        Var<HeaderNode> ref = new Var<HeaderNode>();
+
         return Sequence(
                 FirstOf("######", "#####", "####", "###", "##", "#"),
-                push(new HeaderNode(match().length()))
+                push(ref.setAndGet(new HeaderNode(match().length(), ext(Extensions.TOC)))),
+                headers.add(ref.get())
         );
     }
 
@@ -310,20 +316,26 @@ public class Parser extends BaseParser<Object> implements Extensions {
 
     // vsch: #186 add isSetext flag to header node to distinguish header types
     public Rule SetextHeading1() {
+        Var<HeaderNode> ref = new Var<HeaderNode>();
+
         return Sequence(
-                SetextInline(), push(new HeaderNode(1, popAsNode(), true)),
+                SetextInline(), push(ref.setAndGet(new HeaderNode(1, ext(Extensions.TOC), popAsNode(), true))),
                 ZeroOrMore(SetextInline(), addAsChild()),
                 wrapInAnchor(),
-                Sp(), Newline(), NOrMore('=', 3), Sp(), Newline()
+                Sp(), Newline(), NOrMore('=', 3), Sp(), Newline(),
+                headers.add(ref.get())
         );
     }
 
     public Rule SetextHeading2() {
+        Var<HeaderNode> ref = new Var<HeaderNode>();
+
         return Sequence(
-                SetextInline(), push(new HeaderNode(2, popAsNode(), true)),
+                SetextInline(), push(ref.setAndGet(new HeaderNode(2, ext(Extensions.TOC), popAsNode(), true))),
                 ZeroOrMore(SetextInline(), addAsChild()),
                 wrapInAnchor(),
-                Sp(), Newline(), NOrMore('-', 3), Sp(), Newline()
+                Sp(), Newline(), NOrMore('-', 3), Sp(), Newline(),
+                headers.add(ref.get())
         );
     }
 
@@ -1607,6 +1619,16 @@ public class Parser extends BaseParser<Object> implements Extensions {
                         ZeroOrMore(NotNewline(), Inline(), addAsChild())
                 ),
                 node.get().setExpansion(popAsNode())
+        );
+    }
+
+    //*************** TOC *****************
+
+    public Rule Toc(){
+        return Sequence("[TOC",
+                Optional(Sp(), "level=", Digit(), push(match())),
+                "]",
+                push(new TocNode(headers, peek() instanceof String ? Integer.parseInt(popAsString()): 6))
         );
     }
 

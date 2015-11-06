@@ -166,6 +166,12 @@ public interface Extensions {
     static final int FOOTNOTES = 0x01000000;
 
     /**
+     * Include \u001F in Letters() so that IntelliJ Code Completion Marker will be parsed as part of Identifier
+     * and all elements of markdown that allow Alphanumerics. Only needed by idea-multimarkdown
+     */
+    static final int INTELLIJ_DUMMY_IDENTIFIER = 0x80000000;
+
+    /**
      * All Optionals other than Suppress and FORCELISTITEMPARA which is a backwards compatibility extension
      *
      */

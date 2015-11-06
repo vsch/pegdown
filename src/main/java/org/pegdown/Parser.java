@@ -1581,7 +1581,8 @@ public class Parser extends BaseParser<Object> implements Extensions {
     }
 
     public Rule Letter() {
-        return FirstOf(CharRange('a', 'z'), CharRange('A', 'Z'));
+        return ext(INTELLIJ_DUMMY_IDENTIFIER) ? FirstOf(CharRange('a', 'z'), CharRange('A', 'Z'), '\u001F')
+                : FirstOf(CharRange('a', 'z'), CharRange('A', 'Z'));
     }
 
     public Rule Digit() {

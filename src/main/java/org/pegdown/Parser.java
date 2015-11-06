@@ -26,7 +26,6 @@ import org.parboiled.annotations.DontSkipActionsInPredicates;
 import org.parboiled.annotations.MemoMismatches;
 import org.parboiled.common.ArrayBuilder;
 import org.parboiled.common.ImmutableList;
-import org.parboiled.common.Reference;
 import org.parboiled.parserunners.ParseRunner;
 import org.parboiled.parserunners.ReportingParseRunner;
 import org.parboiled.support.ParsingResult;

@@ -106,11 +106,6 @@ public interface Extensions {
     static final int ANCHORLINKS = 0x400;
 
     /**
-     * Enables TOC
-     */
-    static final int TOC = 0x800;
-
-    /**
      * All available extensions excluding the SUPPRESS_... options, ATXHEADERSPACE. FORCELISTITEMPARA
      */
     static final int ALL = 0x0000FFFF;
@@ -159,8 +154,7 @@ public interface Extensions {
     static final int EXTANCHORLINKS = 0x00400000;
 
     /**
-     * EXTANCHORLINKS should wrap header content instead of creating an empty anchor.
-     * Anchor link wrapps the header content: `<h1><a name="header-a">header a</a></h1>`
+     * EXTANCHORLINKS should wrap header content instead of creating an empty anchor: `<h1><a name="header-a">header a</a></h1>`
      */
     static final int EXTANCHORLINKS_WRAP = 0x00800000;
 
@@ -169,6 +163,11 @@ public interface Extensions {
      * and footnote reference [^1]
      */
     static final int FOOTNOTES = 0x01000000;
+
+    /**
+     * Enables TOC extension
+     */
+    static final int TOC = 0x02000000;
 
     /**
      * Include \u001F in Letters() so that IntelliJ Code Completion Marker will be parsed as part of Identifier

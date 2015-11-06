@@ -106,6 +106,11 @@ public interface Extensions {
     static final int ANCHORLINKS = 0x400;
 
     /**
+     * Enables TOC
+     */
+    static final int TOC = 0x800;
+
+    /**
      * All available extensions excluding the SUPPRESS_... options, ATXHEADERSPACE. FORCELISTITEMPARA
      */
     static final int ALL = 0x0000FFFF;

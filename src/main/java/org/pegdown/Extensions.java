@@ -170,6 +170,12 @@ public interface Extensions {
     static final int TOC = 0x02000000;
 
     /**
+     *  Enables adding a dummy reference key node to RefLink and RefImage so that the AST differs
+     *  between [ ][] and plain [ ] for refLink and ![ ][] and plain ![ ] for RefImage
+     */
+    static final int DUMMY_REFERENCE_KEY = 0x40000000;
+
+    /**
      * Include \u001F in Letters() so that IntelliJ Code Completion Marker will be parsed as part of Identifier
      * and all elements of markdown that allow Alphanumerics. Only needed by idea-multimarkdown
      */

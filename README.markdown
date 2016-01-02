@@ -33,6 +33,8 @@ Currently _pegdown_ supports the following extensions over standard Markdown:
     * Spaces and non-alphanumerics replaced by `-`, multiple dashes trimmed to one.
     * Anchor link is added as first element inside the header with empty content: `<h1><a name="header"></a>header</h1>`
 * EXTANCHORLINKS_WRAP: used in conjunction with above to create an anchor that wraps header content: `<h1><a name="header">header</a></h1>` 
+* TOC: used to enable table of contents extension `[TOC]` or `[TOC level=n]` where n is 1..6, corresponding to max header level to include in the table of contents. This element must be the first one on a line to be recognized.
+* DUMMY_REFERENCE_KEY: to make the parser use the `ReferenceNode.DUMMY_REFERENCE_KEY` instead of `null` for `RefLink` and `RefImage` `referenceKey` when markdown contains `[]` as the reference, as in `[...][]` and `![...][]`. Otherwise there is no way to tell the difference between `[ ][]` and `[ ]` or `![ ][]` and `![ ]` from the AST.
 * FOOTNOTES: Support MultiMarkdown style footnotes: `[^n] for footnote reference` and `[^n]: Footnote text` for footnotes. Where `n` is one or more digit, letter, `-`, `_` or `.`. Footnotes will be put at the bottom of the page, sequentially numbered in order of appearance of the footnote reference. Footnotes that are not referenced will NOT be included in the HTML output.  
 
     ```markdown

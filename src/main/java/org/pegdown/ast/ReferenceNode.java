@@ -19,6 +19,8 @@
 package org.pegdown.ast;
 
 public class ReferenceNode extends SuperNode {
+    final public static SuperNode DUMMY_REFERENCE_KEY = new SuperNode();
+
     private String url;
     private String title;
 

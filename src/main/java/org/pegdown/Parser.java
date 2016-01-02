@@ -1194,7 +1194,8 @@ public class Parser extends BaseParser<Object> implements Extensions {
                                 Spn1(), push(match()),
                                 FirstOf(
                                         Label(), // regular reference link
-                                        Sequence("[]", push(null)) // implicit reference link
+                                        // vsch: without a DUMMY_REFERENCE_KEY there is no way to tell [ ] from [ ][] from the AST
+                                        Sequence("[]", push(ext(DUMMY_REFERENCE_KEY) ? ReferenceNode.DUMMY_REFERENCE_KEY : null)) // implicit reference link
                                 )
                         ),
                         Sequence(push(null), push(null)) // implicit referencelink without trailing []

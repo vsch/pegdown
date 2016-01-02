@@ -28,6 +28,8 @@ This function is also called for VerbatimNode from the DefaultVerbatimSerializer
 
 - Fixed task list items would create an erroneous AST if the space after the `[ ]` or `[x]` was left out which should parse as not a task list item but a normal bullet item.
 
+- Added DUMMY_REFERENCE_KEY Extension option to cause the parser to use the ReferenceNode.DUMMY_REFERENCE_KEY for RefLink and RefImage referenceKey when markdown contains [] reference, as in [...][] and ![...][]. Otherwise there is no way to tell the difference between [ ][] and [ ] or ![ ][] and ![ ] just from the AST.
+
 
 Version 1.6.0 (2015-09-18)
 --------------------------

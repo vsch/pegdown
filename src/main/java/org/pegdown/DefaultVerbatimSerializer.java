@@ -8,11 +8,13 @@ public class DefaultVerbatimSerializer implements VerbatimSerializer {
 
     @Override
     public void serialize(final VerbatimNode node, final Printer printer) {
-        printer.println().print("<pre><code");
+        Attributes attributes = new Attributes();
+
         if (!StringUtils.isEmpty(node.getType())) {
-            printAttribute(printer, "class", node.getType());
+            attributes.add("class", node.getType());
         }
-        printer.print(">");
+
+        printer.println().print("<pre><code").print(printer.preview(node, "code", attributes, false)).print('>');
         String text = node.getText();
         // print HTML breaks for all initial newlines
         while (text.charAt(0) == '\n') {
@@ -22,9 +24,5 @@ public class DefaultVerbatimSerializer implements VerbatimSerializer {
         printer.printEncoded(text);
         printer.print("</code></pre>");
 
-    }
-
-    private void printAttribute(final Printer printer, final String name, final String value) {
-        printer.print(' ').print(name).print('=').print('"').print(value).print('"');
     }
 }

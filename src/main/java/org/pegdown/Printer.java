@@ -18,19 +18,38 @@
 
 package org.pegdown;
 
+import org.pegdown.ast.Node;
+
 /**
  * Encapsulates basic string output functionality.
  */
 public class Printer {
     public final StringBuilder sb;
+    public final ToHtmlSerializer htmlSerializer;
     public int indent;
 
     public Printer() {
-        this(new StringBuilder());
+        this(null, null);
     }
 
     public Printer(StringBuilder sb) {
-        this.sb = sb;
+        this(sb, null);
+    }
+
+    public Printer(ToHtmlSerializer htmlSerializer) {
+        this(null, htmlSerializer);
+    }
+
+    public Printer(StringBuilder sb, ToHtmlSerializer htmlSerializer) {
+        this.sb = sb != null ? sb : new StringBuilder();
+        this.htmlSerializer = htmlSerializer;
+    }
+
+    public Attributes preview(Node node, String tag, Attributes attributes, boolean tocGenerationVisit) {
+        if (htmlSerializer != null) {
+            return htmlSerializer.preview(node, tag, attributes, tocGenerationVisit);
+        }
+        return attributes;
     }
 
     public Printer indent(int delta) {
@@ -40,6 +59,11 @@ public class Printer {
 
     public Printer print(String string) {
         sb.append(string);
+        return this;
+    }
+
+    public Printer print(Attributes attributes) {
+        attributes.print(this);
         return this;
     }
 
@@ -79,9 +103,9 @@ public class Printer {
         int iMax = sb.length();
 
         for (int i = iMax; i-- > 0; ) {
-           if (sb.charAt(i) != ' ') {
-               return sb.charAt(i) == '\n';
-           }
+            if (sb.charAt(i) != ' ') {
+                return sb.charAt(i) == '\n';
+            }
         }
         // all leading spaces
         return false;
@@ -90,7 +114,7 @@ public class Printer {
     public String getString() {
         return sb.toString();
     }
-    
+
     public Printer clear() {
         sb.setLength(0);
         return this;

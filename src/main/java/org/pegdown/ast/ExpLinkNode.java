@@ -18,6 +18,8 @@
 
 package org.pegdown.ast;
 
+import java.util.List;
+
 public class ExpLinkNode extends SuperNode {
     public final String url;
     public final String title;

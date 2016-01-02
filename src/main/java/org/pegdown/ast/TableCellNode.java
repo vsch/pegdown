@@ -18,18 +18,28 @@
 
 package org.pegdown.ast;
 
+import java.util.List;
+
 public class TableCellNode extends SuperNode {
     private int colSpan;
+
+    public TableCellNode() {
+    }
+
+    public TableCellNode(List<Node> children, int colSpan) {
+        super(children);
+        this.colSpan = colSpan;
+    }
 
     public int getColSpan() {
         return colSpan;
     }
-    
+
     public boolean setColSpan(int colSpan) {
         this.colSpan = colSpan;
         return true;
     }
-    
+
     @Override
     public void accept(Visitor visitor) {
         visitor.visit(this);

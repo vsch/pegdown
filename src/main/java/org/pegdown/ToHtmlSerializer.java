@@ -26,9 +26,8 @@ import java.util.*;
 
 import static org.parboiled.common.Preconditions.checkArgNotNull;
 
-public class ToHtmlSerializer implements Visitor {
-
-    protected Printer printer = new Printer();
+public class ToHtmlSerializer implements Visitor, HeaderIdComputer {
+    protected Printer printer = new Printer(this);
     protected final Map<String, ReferenceNode> references = new HashMap<String, ReferenceNode>();
     protected final Map<String, String> abbreviations = new HashMap<String, String>();
     protected final LinkRenderer linkRenderer;
@@ -38,9 +37,32 @@ public class ToHtmlSerializer implements Visitor {
     protected int currentTableColumn;
     protected boolean inTableHeader;
     protected int rootNodeRecursion = 0;
+    protected boolean tocGenerationVisit = false;
 
     protected Map<String, VerbatimSerializer> verbatimSerializers;
     protected Map<String, Integer> referencedFootnotes = new HashMap<String, Integer>();
+    protected Map<Integer, String> headerOffsetAnchorIds = new HashMap<Integer, String>();
+
+    // vsch: override this to modify what attributes get output with every node
+    // tocGenerationVisit is true if this output is for TOC
+    public Attributes preview(Node node, String tag, Attributes attributes, boolean tocGenerationVisit) {
+        return attributes;
+    }
+
+    // vsch: default behaviour unchanged
+    // vsch: override to return the id you want to use for the header and the anchor link if there is one
+    // vsch: if the value you return is an empty string then header will have no id, and if there was an anchor link it
+    // vsch: will be removed from the output. Returning any other value will set the header id to it and also change the
+    // vsch: name and target of the anchor link, if there is one
+    // vsch: anchorLinkNode could be null
+    // vsch: All calls are performed before the top most root node is processed and called in depth first order
+    // vsch: that way the ids will not depend on whether TOC is used or where in the text it is located.
+
+    // vsch: Caution: this will be called with a TaskListItemNode tag == 'li' and tag == 'p' for the same node that is a paragraph wrapped task list item
+    // vsch: allowing you to add attributes to the p tag.
+    public String computeHeaderId(HeaderNode node, AnchorLinkNode anchorLinkNode, String headerText) {
+        return node.isToc() ? node.getId() : (anchorLinkNode != null ? anchorLinkNode.getName() : "");
+    }
 
     public ToHtmlSerializer(LinkRenderer linkRenderer) {
         this(linkRenderer, Collections.<ToHtmlSerializerPlugin>emptyList());
@@ -72,6 +94,13 @@ public class ToHtmlSerializer implements Visitor {
     public void visit(RootNode node) {
         rootNodeRecursion++;
         try {
+            if (rootNodeRecursion == 1) {
+                // compute all the header node id's since these may be affected by the calling order
+                HeaderIdComputingVisitor serializer = new HeaderIdComputingVisitor(this);
+                serializer.visit(node);
+                headerOffsetAnchorIds = serializer.headerOffsetAnchorIds;
+            }
+
             for (ReferenceNode refNode : node.getReferences()) {
                 visitChildren(refNode);
                 references.put(normalize(printer.getString()), refNode);
@@ -135,18 +164,21 @@ public class ToHtmlSerializer implements Visitor {
         } else {
             num = referencedFootnotes.get(footnote);
         }
-        printer.print("<sup id=\"fnref-" + num + "\"><a href=\"#fn-" + num + "\" class=\"footnote-ref\">" + num + "</a></sup>");
+        String fnNum = String.valueOf(num);
+        Attributes attributes = new Attributes();
+        attributes.add("id", "fnref-" + fnNum);
+        printer.print("<sup").print(preview(node, "sup", attributes, tocGenerationVisit)).print("><a href=\"#fn-").print(fnNum).print("\" class=\"footnote-ref\">").print(fnNum).print("</a></sup>");
     }
 
     public void visit(AbbreviationNode node) {
     }
 
     public void visit(AnchorLinkNode node) {
-        printLink(linkRenderer.render(node));
+        printLink(node, linkRenderer.render(node));
     }
 
     public void visit(AutoLinkNode node) {
-        printLink(linkRenderer.render(node));
+        printLink(node, linkRenderer.render(node));
     }
 
     public void visit(BlockQuoteNode node) {
@@ -175,30 +207,67 @@ public class ToHtmlSerializer implements Visitor {
 
     public void visit(ExpImageNode node) {
         String text = printChildrenToString(node);
-        printImageTag(linkRenderer.render(node, text));
+        printImageTag(node, linkRenderer.render(node, text));
     }
 
     public void visit(ExpLinkNode node) {
         String text = printChildrenToString(node);
-        printLink(linkRenderer.render(node, text));
+        printLink(node, linkRenderer.render(node, text));
     }
 
     public void visit(HeaderNode node) {
-        if (node.isToc()) {
-            printBreakBeforeTagWithId(node, "h" + node.getLevel(), node.getId());
-        } else {
-            printBreakBeforeTag(node, "h" + node.getLevel());
+        boolean startWasNewLine = printer.endsWithNewLine();
+        String tag = "h" + node.getLevel();
+        Attributes attributes = new Attributes();
+        AnchorLinkNode insertFirstChild = null;
+        int nSkipFirst = 0;
+        AnchorLinkNode anchorLinkNode = null;
+
+        if (node.getChildren().size() > 0 && node.getChildren().get(0) instanceof AnchorLinkNode) {
+            anchorLinkNode = (AnchorLinkNode) node.getChildren().get(0);
         }
+
+        assert headerOffsetAnchorIds.containsKey(node.getStartIndex());
+        String anchorId = headerOffsetAnchorIds.get(node.getStartIndex());
+
+        if (!anchorId.isEmpty() && (node.isToc() || anchorLinkNode != null && !anchorLinkNode.getName().equals(anchorId))) {
+            attributes.add("id", anchorId);
+        }
+
+        // vsch: replace the first child if it is an anchor and its name isn't the computed id
+        if (anchorLinkNode != null && !anchorLinkNode.getName().equals(anchorId)) {
+            nSkipFirst = 1;
+            if (!anchorId.isEmpty()) {
+                insertFirstChild = new AnchorLinkNode(anchorId, anchorLinkNode.getText());
+                insertFirstChild.setStartIndex(anchorLinkNode.getStartIndex());
+                insertFirstChild.setEndIndex(anchorLinkNode.getEndIndex());
+            }
+        }
+
+        printer.println();
+        printer.print("<").print(tag).print(preview(node, tag, attributes, tocGenerationVisit)).print(">");
+        if (insertFirstChild != null) insertFirstChild.accept(this);
+        visitChildrenSkipFirst(node, nSkipFirst);
+        printer.print('<').print('/').print(tag).print('>');
+
+        if (startWasNewLine) printer.println();
     }
 
     public void visit(HtmlBlockNode node) {
         String text = node.getText();
-        if (text.length() > 0) printer.println();
-        printer.print(text);
+        if (text.length() > 0) {
+            printer.println();
+            printer.print(text);
+        }
     }
 
     public void visit(InlineHtmlNode node) {
         printer.print(node.getText());
+    }
+
+    // vsch: override this to generate different task list items
+    public void printTaskListItemMarker(Printer printer, TaskListNode node, boolean isParaWrapped) {
+        printer.print("<input type=\"checkbox\" class=\"task-list-item-checkbox\"" + (node.isDone() ? " checked=\"checked\"" : "") + " disabled=\"disabled\"></input>");
     }
 
     public void visit(ListItemNode node) {
@@ -206,22 +275,25 @@ public class ToHtmlSerializer implements Visitor {
             // vsch: #185 handle GitHub style task list items, these are a bit messy because the <input> checkbox needs to be
             // included inside the optional <p></p> first grand-child of the list item, first child is always RootNode
             // because the list item text is recursively parsed.
-            Node firstChild = node.getChildren().get(0).getChildren().get(0);
+            List<Node> children = node.getChildren().get(0).getChildren();
+            Node firstChild = children.size() > 0 ? children.get(0) : null;
             boolean firstIsPara = firstChild instanceof ParaNode;
             int indent = node.getChildren().size() > 1 ? 2 : 0;
             boolean startWasNewLine = printer.endsWithNewLine();
+            Attributes attributes = new Attributes().add("class", "task-list-item");
 
-            printer.println().print("<li class=\"task-list-item\">").indent(indent);
+            printer.println().print("<li").print(preview(node, "li", attributes, tocGenerationVisit)).print(">").indent(indent);
             if (firstIsPara) {
-                printer.println().print("<p>");
-                printer.print("<input type=\"checkbox\" class=\"task-list-item-checkbox\"" + (((TaskListNode) node).isDone() ? " checked=\"checked\"" : "") + " disabled=\"disabled\"></input>");
+                Attributes paraAttributes = new Attributes();
+                printer.println().print("<p").print(preview(node, "p", paraAttributes, tocGenerationVisit)).print(">");
+                printTaskListItemMarker(printer, (TaskListNode) node, true);
                 visitChildren((SuperNode) firstChild);
 
                 // render the other children, the p tag is taken care of here
                 visitChildrenSkipFirst(node);
                 printer.print("</p>");
             } else {
-                printer.print("<input type=\"checkbox\" class=\"task-list-item-checkbox\"" + (((TaskListNode) node).isDone() ? " checked=\"checked\"" : "") + " disabled=\"disabled\"></input>");
+                printTaskListItemMarker(printer, (TaskListNode) node, false);
                 visitChildren(node);
             }
             printer.indent(-indent).printchkln(indent != 0).print("</li>")
@@ -232,7 +304,7 @@ public class ToHtmlSerializer implements Visitor {
     }
 
     public void visit(MailLinkNode node) {
-        printLink(linkRenderer.render(node));
+        printLink(node, linkRenderer.render(node));
     }
 
     public void visit(OrderedListNode node) {
@@ -278,7 +350,7 @@ public class ToHtmlSerializer implements Visitor {
                 if (node.referenceKey != null) printer.print(key);
                 printer.print(']');
             }
-        } else printImageTag(linkRenderer.render(node, refNode.getUrl(), refNode.getTitle(), text));
+        } else printImageTag(node, linkRenderer.render(node, refNode.getUrl(), refNode.getTitle(), text));
     }
 
     public void visit(RefLinkNode node) {
@@ -292,7 +364,7 @@ public class ToHtmlSerializer implements Visitor {
                 if (node.referenceKey != null) printer.print(key);
                 printer.print(']');
             }
-        } else printLink(linkRenderer.render(node, refNode.getUrl(), refNode.getTitle(), text));
+        } else printLink(node, linkRenderer.render(node, refNode.getUrl(), refNode.getTitle(), text));
     }
 
     public void visit(SimpleNode node) {
@@ -346,7 +418,8 @@ public class ToHtmlSerializer implements Visitor {
 
     @Override
     public void visit(TableCaptionNode node) {
-        printer.println().print("<caption>");
+        Attributes attributes = new Attributes();
+        printer.println().print('<').print("caption").print(preview(node, "caption", attributes, tocGenerationVisit)).print('>');
         visitChildren(node);
         printer.print("</caption>");
     }
@@ -356,32 +429,39 @@ public class ToHtmlSerializer implements Visitor {
         List<TableColumnNode> columns = currentTableNode.getColumns();
         TableColumnNode column = columns.get(Math.min(currentTableColumn, columns.size() - 1));
 
-        printer.println().print('<').print(tag);
-        column.accept(this);
-        if (node.getColSpan() > 1) printer.print(" colspan=\"").print(Integer.toString(node.getColSpan())).print('"');
-        printer.print('>');
+        Attributes attributes = new Attributes();
+        getColumnAttributes(column, attributes);
+        if (node.getColSpan() > 1) attributes.add("colspan", String.valueOf(node.getColSpan()));
+
+        printer.print('<').print(tag).print(preview(node, tag, attributes, tocGenerationVisit)).print('>');
         visitChildren(node);
         printer.print('<').print('/').print(tag).print('>');
 
         currentTableColumn += node.getColSpan();
     }
 
-    public void visit(TableColumnNode node) {
+    public void getColumnAttributes(TableColumnNode node, Attributes attributes) {
         switch (node.getAlignment()) {
             case None:
                 break;
             case Left:
-                printer.print(" align=\"left\"");
+                attributes.add("align", "left");
                 break;
             case Right:
-                printer.print(" align=\"right\"");
+                attributes.add("align", "right");
                 break;
             case Center:
-                printer.print(" align=\"center\"");
+                attributes.add("align", "center");
                 break;
             default:
                 throw new IllegalStateException();
         }
+    }
+
+    public void visit(TableColumnNode node) {
+        Attributes attributes = new Attributes();
+        getColumnAttributes(node, attributes);
+        printer.print(attributes);
     }
 
     public void visit(TableHeaderNode node) {
@@ -401,16 +481,18 @@ public class ToHtmlSerializer implements Visitor {
         printIndentedTag(node, "tr");
     }
 
-
     public void visit(TocNode node) {
-
         if (!node.getHeaders().isEmpty()) {
             int initLevel = node.getHeaders().get(0).getLevel();
             int lastLevel = node.getHeaders().get(0).getLevel();
 
-            printer.println().print("<ul>").println();
+            Attributes attributes = new Attributes();
+            AnchorLinkNode anchorLinkNode;
+            String headerId;
 
-            for (int i = 0 ; i < node.getHeaders().size(); ++i) {
+            printer.print('<').print("ul").print(preview(node, "ul", attributes, tocGenerationVisit)).print('>');
+
+            for (int i = 0; i < node.getHeaders().size(); ++i) {
 
                 HeaderNode header = node.getHeaders().get(i);
 
@@ -434,7 +516,25 @@ public class ToHtmlSerializer implements Visitor {
                     }
                 }
 
-                printer.print("<li><a href=\"#").print(header.getId()).print("\">").print(header.getText()).print("</a>");
+                if (header.getChildren().size() > 0 && header.getChildren().get(0) instanceof AnchorLinkNode) {
+                    anchorLinkNode = (AnchorLinkNode) header.getChildren().get(0);
+                } else {
+                    anchorLinkNode = null;
+                }
+
+                assert headerOffsetAnchorIds.containsKey(header.getStartIndex());
+                headerId = headerOffsetAnchorIds.get(header.getStartIndex());
+
+                printer.print("<li><a href=\"#").print(headerId).print("\">");
+                if (anchorLinkNode != null && header.getChildren().size() == 1) {
+                    // must be extanchors with wrap, all text is in the anchor
+                    printer.print(anchorLinkNode.getText());
+                } else {
+                    tocGenerationVisit = true;
+                    visitChildrenSkipFirst(header, anchorLinkNode != null ? 1 : 0);
+                    tocGenerationVisit = false;
+                }
+                printer.print("</a>");
 
                 lastLevel = header.getLevel();
             }
@@ -460,7 +560,7 @@ public class ToHtmlSerializer implements Visitor {
     }
 
     public void visit(WikiLinkNode node) {
-        printLink(linkRenderer.render(node));
+        printLink(node, linkRenderer.render(node));
     }
 
     public void visit(TextNode node) {
@@ -491,28 +591,32 @@ public class ToHtmlSerializer implements Visitor {
 
     // helpers
     protected void visitChildren(SuperNode node) {
-        for (Node child : node.getChildren()) {
-            child.accept(this);
-        }
+        visitChildrenSkipFirst(node, 0);
     }
 
     // helpers
     protected void visitChildrenSkipFirst(SuperNode node) {
-        boolean first = true;
+        visitChildrenSkipFirst(node, 1);
+    }
+
+    // helpers
+    protected void visitChildrenSkipFirst(SuperNode node, int nToSkip) {
         for (Node child : node.getChildren()) {
-            if (!first) child.accept(this);
-            first = false;
+            if (nToSkip > 0) nToSkip--;
+            else child.accept(this);
         }
     }
 
     protected void printTag(TextNode node, String tag) {
-        printer.print('<').print(tag).print('>');
+        Attributes attributes = new Attributes();
+        printer.print('<').print(tag).print(preview(node, tag, attributes, tocGenerationVisit)).print('>');
         printer.printEncoded(node.getText());
         printer.print('<').print('/').print(tag).print('>');
     }
 
     protected void printTag(SuperNode node, String tag) {
-        printer.print('<').print(tag).print('>');
+        Attributes attributes = new Attributes();
+        printer.print('<').print(tag).print(preview(node, tag, attributes, tocGenerationVisit)).print('>');
         visitChildren(node);
         printer.print('<').print('/').print(tag).print('>');
     }
@@ -526,10 +630,10 @@ public class ToHtmlSerializer implements Visitor {
 
     protected void printBreakBeforeTagWithId(SuperNode node, String tag, String id) {
         boolean startWasNewLine = printer.endsWithNewLine();
+        Attributes attributes = new Attributes().add("id", id);
+
         printer.println();
-        printer.print("<").print(tag);
-        printAttribute("id", id);
-        printer.print(">");
+        printer.print("<").print(tag).print(preview(node, tag, attributes, tocGenerationVisit)).print(">");
         visitChildren(node);
         printer.print('<').print('/').print(tag).print('>');
 
@@ -537,54 +641,52 @@ public class ToHtmlSerializer implements Visitor {
     }
 
     protected void printIndentedTag(SuperNode node, String tag) {
-        printer.println().print('<').print(tag).print('>').indent(+2);
+        Attributes attributes = new Attributes();
+        printer.println().print('<').print(tag).print(preview(node, tag, attributes, tocGenerationVisit)).print('>').indent(+2);
         visitChildren(node);
         printer.indent(-2).println().print('<').print('/').print(tag).print('>');
     }
 
     protected void printConditionallyIndentedTag(SuperNode node, String tag) {
+        Attributes attributes = new Attributes();
         if (node.getChildren().size() > 1) {
-            printer.println().print('<').print(tag).print('>').indent(+2);
+            printer.println().print('<').print(tag).print(preview(node, tag, attributes, tocGenerationVisit)).print('>').indent(+2);
             visitChildren(node);
             printer.indent(-2).println().print('<').print('/').print(tag).print('>');
         } else {
             boolean startWasNewLine = printer.endsWithNewLine();
 
-            printer.println().print('<').print(tag).print('>');
+            printer.println().print('<').print(tag).print(preview(node, tag, attributes, tocGenerationVisit)).print('>');
             visitChildren(node);
             printer.print('<').print('/').print(tag).print('>').printchkln(startWasNewLine);
         }
     }
 
-    protected void printImageTag(LinkRenderer.Rendering rendering) {
-        printer.print("<img");
-        printAttribute("src", rendering.href);
+    protected void printImageTag(Node node, LinkRenderer.Rendering rendering) {
+        Attributes attributes = new Attributes().add("src", rendering.href);
+
         // shouldn't include the alt attribute if its empty
         if (!rendering.text.equals("")) {
-            printAttribute("alt", rendering.text);
+            attributes.add("alt", rendering.text);
         }
-        for (LinkRenderer.Attribute attr : rendering.attributes) {
-            printAttribute(attr.name, attr.value);
-        }
-        printer.print(" />");
+
+        attributes.addAll(rendering.attributes);
+        printer.print("<img").print(preview(node, "img", attributes, tocGenerationVisit)).print(" />");
     }
 
-    protected void printLink(LinkRenderer.Rendering rendering) {
-        printer.print('<').print('a');
-        printAttribute("href", rendering.href);
-        for (LinkRenderer.Attribute attr : rendering.attributes) {
-            printAttribute(attr.name, attr.value);
-        }
-        printer.print('>').print(rendering.text).print("</a>");
+    protected void printLink(Node node, LinkRenderer.Rendering rendering) {
+        Attributes attributes = new Attributes().add("href", rendering.href).addAll(rendering.attributes);
+        printer.print('<').print('a').print(preview(node, "a", attributes, tocGenerationVisit)).print('>').print(rendering.text).print("</a>");
     }
 
     protected void printAttribute(String name, String value) {
-        printer.print(' ').print(name).print('=').print('"').print(value).print('"');
+        // vsch: escape " and \ in attribute value strings
+        printer.print(' ').print(name).print('=').print('"').print(value.replace("\\", "\\\\").replace("\"", "\\\"")).print('"');
     }
 
     protected String printChildrenToString(SuperNode node) {
         Printer priorPrinter = printer;
-        printer = new Printer();
+        printer = new Printer(this);
         visitChildren(node);
         String result = printer.getString();
         printer = priorPrinter;

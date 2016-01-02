@@ -182,4 +182,19 @@ public interface Extensions {
 
     static final int ALL_OPTIONALS = (ATXHEADERSPACE  | RELAXEDHRULES | TASKLISTITEMS | EXTANCHORLINKS | FOOTNOTES);
     static final int ALL_WITH_OPTIONALS = ALL | (ATXHEADERSPACE  | RELAXEDHRULES | TASKLISTITEMS | FOOTNOTES);
+
+    /**
+     * These are GitHub main repo document processing compatibility flags
+     */
+    static final int GITHUB_DOCUMENT_COMPATIBLE = (FENCED_CODE_BLOCKS | TABLES | AUTOLINKS | ANCHORLINKS | TASKLISTITEMS | STRIKETHROUGH | ATXHEADERSPACE | RELAXEDHRULES);
+
+    /**
+     * These are GitHub wiki page processing compatibility flags
+     */
+    static final int GITHUB_WIKI_COMPATIBLE = (GITHUB_DOCUMENT_COMPATIBLE | WIKILINKS);
+
+    /**
+     * These are GitHub comment (issues, pull requests and comments) processing compatibility flags
+     */
+    static final int GITHUB_COMMENT_COMPATIBLE = (GITHUB_DOCUMENT_COMPATIBLE | HARDWRAPS);
 }

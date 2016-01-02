@@ -23,8 +23,13 @@ public class FootnoteNode extends TextNode {
     private Node footnote;
 
     public FootnoteNode(String text) {
+        this(text, null);
+    }
+
+    public FootnoteNode(String text, Node footnote) {
         super(text);
         this.label = text.substring(2, text.indexOf(']'));
+        this.footnote = footnote;
     }
 
     public String getLabel() {

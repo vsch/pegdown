@@ -18,12 +18,19 @@
 
 package org.pegdown.ast;
 
+import java.util.List;
+
 public class QuotedNode extends SuperNode {
     public enum Type { DoubleAngle, Double, Single }
-    
+
     private final Type type;
 
     public QuotedNode(Type type) {
+        this.type = type;
+    }
+
+    public QuotedNode(List<Node> children, Type type) {
+        super(children);
         this.type = type;
     }
 

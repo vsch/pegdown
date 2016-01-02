@@ -25,6 +25,14 @@ import java.util.List;
 public class TableNode extends SuperNode {
     private ImmutableList<TableColumnNode> columns = ImmutableList.of();
 
+    public TableNode() {
+    }
+
+    public TableNode(List<Node> children, ImmutableList<TableColumnNode> columns) {
+        super(children);
+        this.columns = columns;
+    }
+
     public List<TableColumnNode> getColumns() {
         return columns;
     }
@@ -37,7 +45,7 @@ public class TableNode extends SuperNode {
     public boolean hasTwoOrMoreDividers() {
         return columns != null && columns.size() > 1;
     }
-    
+
     @Override
     public void accept(Visitor visitor) {
         visitor.visit(this);

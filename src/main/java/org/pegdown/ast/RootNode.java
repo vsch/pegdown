@@ -29,6 +29,22 @@ public class RootNode extends SuperNode {
     private List<AbbreviationNode> abbreviations = ImmutableList.of();
     private List<FootnoteNode> footnotes = ImmutableList.of();
 
+    public RootNode() {
+    }
+
+    public RootNode(List<Node> children, List<ReferenceNode> references, List<AbbreviationNode> abbreviations, List<FootnoteNode> footnotes) {
+        super(children);
+        this.references = references;
+        this.abbreviations = abbreviations;
+        this.footnotes = footnotes;
+    }
+
+    public RootNode(List<ReferenceNode> references, List<AbbreviationNode> abbreviations, List<FootnoteNode> footnotes) {
+        this.references = references;
+        this.abbreviations = abbreviations;
+        this.footnotes = footnotes;
+    }
+
     public List<FootnoteNode> getFootnotes() {
         return footnotes;
     }

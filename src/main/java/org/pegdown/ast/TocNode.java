@@ -18,6 +18,12 @@ public class TocNode extends SuperNode {
         this.level = level;
     }
 
+    public TocNode(List<Node> children, List<HeaderNode> headers, int level) {
+        super(children);
+        this.headers = headers;
+        this.level = level;
+    }
+
     public List<HeaderNode> getHeaders() {
         return headers;
     }

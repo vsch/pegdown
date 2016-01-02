@@ -25,6 +25,11 @@ public class AbbreviationNode extends SuperNode {
         super(child);
     }
 
+    public AbbreviationNode(Node child, Node expansion) {
+        super(child);
+        this.expansion = expansion;
+    }
+
     public Node getExpansion() {
         return expansion;
     }

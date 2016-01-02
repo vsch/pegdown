@@ -18,11 +18,20 @@
 
 package org.pegdown.ast;
 
+import java.util.List;
+
 public class TableColumnNode extends SuperNode {
     public enum Alignment { None, Left, Right, Center }
-    
-    private Alignment alignment = Alignment.None;
-    
+    protected Alignment alignment = Alignment.None;
+
+    public TableColumnNode() {
+    }
+
+    public TableColumnNode(List<Node> children, Alignment alignment) {
+        super(children);
+        this.alignment = alignment;
+    }
+
     public boolean markLeftAligned() {
         alignment = alignment == Alignment.Right ? Alignment.Center : Alignment.Left;
         return true;

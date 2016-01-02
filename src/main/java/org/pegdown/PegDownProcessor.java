@@ -18,14 +18,14 @@
 
 package org.pegdown;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
 import org.parboiled.Parboiled;
 import org.pegdown.ast.RootNode;
 import org.pegdown.plugins.PegDownPlugins;
 import org.pegdown.plugins.ToHtmlSerializerPlugin;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A clean and lightweight Markdown-to-HTML filter based on a PEG parser implemented with parboiled.
@@ -66,7 +66,7 @@ public class PegDownProcessor {
     /**
      * Creates a new processor instance with the given {@link org.pegdown.Extensions} and parsing timeout.
      *
-     * @param options the flags of the extensions to enable as a bitmask
+     * @param options                the flags of the extensions to enable as a bitmask
      * @param maxParsingTimeInMillis the parsing timeout
      */
     public PegDownProcessor(int options, long maxParsingTimeInMillis) {
@@ -86,9 +86,9 @@ public class PegDownProcessor {
     /**
      * Creates a new processor instance with the given {@link org.pegdown.Extensions}, parsing timeout and plugins.
      *
-     * @param options the flags of the extensions to enable as a bitmask
+     * @param options                the flags of the extensions to enable as a bitmask
      * @param maxParsingTimeInMillis the parsing timeout
-     * @param plugins the plugins to use
+     * @param plugins                the plugins to use
      */
     public PegDownProcessor(int options, long maxParsingTimeInMillis, PegDownPlugins plugins) {
         this(Parboiled.createParser(Parser.class, options, maxParsingTimeInMillis, Parser.DefaultParseRunnerProvider, plugins));
@@ -119,16 +119,16 @@ public class PegDownProcessor {
      * If the input cannot be parsed within the configured parsing timeout the method returns null.
      *
      * @param markdownSource the markdown source to convert
-     * @param linkRenderer the LinkRenderer to use
+     * @param linkRenderer   the LinkRenderer to use
      * @return the HTML
      */
     public String markdownToHtml(String markdownSource, LinkRenderer linkRenderer) {
         return markdownToHtml(markdownSource.toCharArray(), linkRenderer);
     }
 
-	public String markdownToHtml(String markdownSource, LinkRenderer linkRenderer, Map<String, VerbatimSerializer> verbatimSerializerMap) {
-		return markdownToHtml(markdownSource.toCharArray(), linkRenderer, verbatimSerializerMap);
-	}
+    public String markdownToHtml(String markdownSource, LinkRenderer linkRenderer, Map<String, VerbatimSerializer> verbatimSerializerMap) {
+        return markdownToHtml(markdownSource.toCharArray(), linkRenderer, verbatimSerializerMap);
+    }
 
     /**
      * Converts the given markdown source to HTML.
@@ -146,29 +146,29 @@ public class PegDownProcessor {
      * If the input cannot be parsed within the configured parsing timeout the method returns null.
      *
      * @param markdownSource the markdown source to convert
-     * @param linkRenderer the LinkRenderer to use
+     * @param linkRenderer   the LinkRenderer to use
      * @return the HTML
      */
     public String markdownToHtml(char[] markdownSource, LinkRenderer linkRenderer) {
-	    return markdownToHtml(markdownSource, linkRenderer, Collections.<String, VerbatimSerializer>emptyMap());
+        return markdownToHtml(markdownSource, linkRenderer, Collections.<String, VerbatimSerializer>emptyMap());
     }
 
-	public String markdownToHtml(char[] markdownSource, LinkRenderer linkRenderer, Map<String, VerbatimSerializer> verbatimSerializerMap) {
+    public String markdownToHtml(char[] markdownSource, LinkRenderer linkRenderer, Map<String, VerbatimSerializer> verbatimSerializerMap) {
         return markdownToHtml(markdownSource, linkRenderer,
-				verbatimSerializerMap, parser.plugins.getHtmlSerializerPlugins());
+                verbatimSerializerMap, parser.plugins.getHtmlSerializerPlugins());
     }
 
-	public String markdownToHtml(char[] markdownSource,
-			LinkRenderer linkRenderer,
-			Map<String, VerbatimSerializer> verbatimSerializerMap, 
-			List<ToHtmlSerializerPlugin> plugins) {
-		try {
+    public String markdownToHtml(char[] markdownSource,
+                                 LinkRenderer linkRenderer,
+                                 Map<String, VerbatimSerializer> verbatimSerializerMap,
+                                 List<ToHtmlSerializerPlugin> plugins) {
+        try {
             RootNode astRoot = parseMarkdown(markdownSource);
             return new ToHtmlSerializer(linkRenderer, verbatimSerializerMap, plugins).toHtml(astRoot);
-        } catch(ParsingTimeoutException e) {
+        } catch (ParsingTimeoutException e) {
             return null;
         }
-	}
+    }
 
     /**
      * Parses the given markdown source and returns the root node of the generated Abstract Syntax Tree.

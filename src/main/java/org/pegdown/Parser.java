@@ -577,7 +577,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
         return Sequence(
                 push(getContext().getCurrentIndex()),
                 FirstOf(CrossedOut(BlankLine(), block), tight.set(true)),
-                CrossedOut(itemStart, block), Optional(CrossedOut(Sequence(FirstOf(Sequence("[ ]", taskType.set(1)), Sequence(FirstOf("[x]", "[X]"), taskType.set(2))), OneOrMore(Spacechar())), taskListMarker)),
+                CrossedOut(itemStart, block), Optional(CrossedOut(FirstOf(Sequence("[ ] ", taskType.set(1)), Sequence(FirstOf("[x] ", "[X] "), taskType.set(2))), taskListMarker)),
                 block.append(taskListMarker.getString()), Line(block),
                 //debugMsg("have a " + taskType.get() + " task list body", block.getString()),
                 ZeroOrMore(
@@ -1275,7 +1275,8 @@ public class Parser extends BaseParser<Object> implements Extensions {
                 ext(AUTOLINKS) ?
                         TestNot(
                                 FirstOf(
-                                        AnyOf("<>"),
+                                        // vsch: don't allow emphasis or strikethrough in autolinks otherwise **name@address.com** gets parsed as ** 'name@address.com**' instead of ** 'name@address.com' **
+                                        AnyOf(ext(STRIKETHROUGH) ? "<*~>":"<*>"),
                                         Sequence(Optional(AnyOf(".,;:)}]\"'")), FirstOf(Spacechar(), Newline()))
                                 )
                         ) :
@@ -1623,11 +1624,11 @@ public class Parser extends BaseParser<Object> implements Extensions {
 
     //*************** TOC *****************
 
-    public Rule Toc(){
-        return Sequence("[TOC",
+    public Rule Toc() {
+        return NodeSequence("[TOC",
                 Optional(Sp(), "level=", Digit(), push(match())),
                 "]",
-                push(new TocNode(headers, peek() instanceof String ? Integer.parseInt(popAsString()): 6))
+                push(new TocNode(headers, peek() instanceof String ? Integer.parseInt(popAsString()) : 6))
         );
     }
 

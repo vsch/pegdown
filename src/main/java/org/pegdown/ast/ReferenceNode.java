@@ -26,10 +26,16 @@ public class ReferenceNode extends SuperNode {
         super(child);
     }
 
+    public ReferenceNode(Node child, String url, String title) {
+        super(child);
+        this.url = url;
+        this.title = title;
+    }
+
     public String getUrl() {
         return url;
     }
-    
+
     public boolean setUrl(String url) {
         this.url = url;
         return true;
@@ -38,12 +44,12 @@ public class ReferenceNode extends SuperNode {
     public String getTitle() {
         return title;
     }
-    
+
     public boolean setTitle(String title) {
         this.title = title;
         return true;
     }
-    
+
     @Override
     public void accept(Visitor visitor) {
         visitor.visit(this);

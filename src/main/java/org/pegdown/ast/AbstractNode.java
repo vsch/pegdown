@@ -1,5 +1,7 @@
 package org.pegdown.ast;
 
+import java.util.List;
+
 public abstract class AbstractNode implements Node {
     private int startIndex;
     private int endIndex;
@@ -29,11 +31,27 @@ public abstract class AbstractNode implements Node {
     public void shiftIndices(int delta) {
         startIndex += delta;
         endIndex += delta;
+
+        shiftIndices(delta, getChildren());
+    }
+
+    public static void shiftIndices(int delta, List<? extends Node> nodes) {
+        for (Node subNode : nodes) {
+            ((AbstractNode) subNode).shiftIndices(delta);
+        }
+    }
+
+    public static void mapIndices(int[] ixMap, List<? extends Node> nodes) {
+        for (Node subNode : nodes) {
+            ((AbstractNode) subNode).mapIndices(ixMap);
+        }
     }
 
     public void mapIndices(int[] ixMap) {
         startIndex = ixMap[startIndex];
         endIndex = ixMap[endIndex];
+
+        mapIndices(ixMap, getChildren());
     }
 
     @Override

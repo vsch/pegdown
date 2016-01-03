@@ -47,6 +47,19 @@ public class FootnoteNode extends TextNode {
     }
 
     @Override
+    public void shiftIndices(int delta) {
+        super.shiftIndices(delta);
+        ((AbstractNode) footnote).shiftIndices(delta);
+    }
+
+    @Override
+    public void mapIndices(int[] ixMap) {
+        super.mapIndices(ixMap);
+        ((AbstractNode) footnote).mapIndices(ixMap);
+    }
+
+
+    @Override
     public void accept(Visitor visitor) {
         visitor.visit(this);
     }

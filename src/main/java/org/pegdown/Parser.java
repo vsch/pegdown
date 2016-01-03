@@ -713,9 +713,13 @@ public class Parser extends BaseParser<Object> implements Extensions {
     Node withIndicesShifted(Node node, int delta) {
         if (delta != 0) {
             ((AbstractNode) node).shiftIndices(delta);
-            for (Node subNode : node.getChildren()) {
-                withIndicesShifted(subNode, delta);
-            }
+
+            // vsch: a few hours trying to figure out why the AST is wrong for RefLinkNode.referenceKey
+            // need to shift any nodes contained in other notes that are not children, each node should do its own shifting for
+            // children and other nodes it contains as non-children, that way this code will always be correct.
+            //for (Node subNode : node.getChildren()) {
+            //    withIndicesShifted(subNode, delta);
+            //}
         }
         return node;
     }
@@ -1947,9 +1951,6 @@ public class Parser extends BaseParser<Object> implements Extensions {
 
     protected void fixIndices(Node node, int[] ixMap) {
         ((AbstractNode) node).mapIndices(ixMap);
-        for (Node subNode : node.getChildren()) {
-            fixIndices(subNode, ixMap);
-        }
     }
 
     public RootNode parseInternal(char[] source) {

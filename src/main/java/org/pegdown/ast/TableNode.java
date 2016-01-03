@@ -47,6 +47,18 @@ public class TableNode extends SuperNode {
     }
 
     @Override
+    public void shiftIndices(int delta) {
+        super.shiftIndices(delta);
+        AbstractNode.shiftIndices(delta, columns);
+    }
+
+    @Override
+    public void mapIndices(int[] ixMap) {
+        super.mapIndices(ixMap);
+        AbstractNode.mapIndices(ixMap, columns);
+    }
+
+    @Override
     public void accept(Visitor visitor) {
         visitor.visit(this);
     }

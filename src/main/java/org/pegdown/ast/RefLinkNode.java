@@ -29,6 +29,18 @@ public class RefLinkNode extends SuperNode {
     }
 
     @Override
+    public void shiftIndices(int delta) {
+        super.shiftIndices(delta);
+        if (referenceKey != null && referenceKey != ReferenceNode.DUMMY_REFERENCE_KEY) ((AbstractNode) referenceKey).shiftIndices(delta);
+    }
+
+    @Override
+    public void mapIndices(int[] ixMap) {
+        super.mapIndices(ixMap);
+        if (referenceKey != null && referenceKey != ReferenceNode.DUMMY_REFERENCE_KEY) ((AbstractNode) referenceKey).mapIndices(ixMap);
+    }
+
+    @Override
     public void accept(Visitor visitor) {
         visitor.visit(this);
     }

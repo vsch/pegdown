@@ -32,6 +32,26 @@ public class RootNode extends SuperNode {
     public RootNode() {
     }
 
+    @Override
+    public void shiftIndices(int delta) {
+        super.shiftIndices(delta);
+
+        // these are adjusted by their containing parents
+        //AbstractNode.shiftIndices(delta, references);
+        //AbstractNode.shiftIndices(delta, abbreviations);
+        //AbstractNode.shiftIndices(delta, footnotes);
+    }
+
+    @Override
+    public void mapIndices(int[] ixMap) {
+        super.mapIndices(ixMap);
+
+        // these are adjusted by their containing parents
+        //AbstractNode.mapIndices(ixMap, references);
+        //AbstractNode.mapIndices(ixMap, abbreviations);
+        //AbstractNode.mapIndices(ixMap, footnotes);
+    }
+
     public RootNode(List<Node> children, List<ReferenceNode> references, List<AbbreviationNode> abbreviations, List<FootnoteNode> footnotes) {
         super(children);
         this.references = references;

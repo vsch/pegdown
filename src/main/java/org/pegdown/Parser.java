@@ -115,6 +115,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
                 ZeroOrMore(BlankLine()),
                 FirstOf(new ArrayBuilder<Rule>()
                         .add(plugins.getBlockPluginRules())
+                        //.addNonNulls(ext(MULTI_LINE_IMAGE_URLS) ? ImageWithMultiLineURL() : null)
                         .add(BlockQuote(), Verbatim())
                         .addNonNulls(ext(FOOTNOTES) ? Footnote() : null)
                         .addNonNulls(ext(ABBREVIATIONS) ? Abbreviation() : null)
@@ -1153,7 +1154,68 @@ public class Parser extends BaseParser<Object> implements Extensions {
     public Rule Image() {
         return NodeSequence(
                 '!', ImageAlt(),
-                FirstOf(ExplicitLink(true), ReferenceLink(true))
+                FirstOf(ext(MULTI_LINE_IMAGE_URLS) ? MultiLineURLImage() : NOTHING, ExplicitLink(true), ReferenceLink(true))
+        );
+    }
+
+    // vsch: a real hack to get multi-line images, not guaranteed to play nice with nested constructs, this is TBD
+    public Rule MultiLineImageAlt() {
+        StringBuilderVar imageAlt = new StringBuilderVar();
+        return NodeSequence(
+                ZeroOrMore(TestNot(FirstOf(AnyOf("[]"), Newline())), ANY, imageAlt.append(matchedChar())),
+                //debugMsg("MultiLineImageAlt:", imageAlt.getString()),
+                push(new TextNode(imageAlt.getString())), imageAlt.clearContents()
+        );
+    }
+
+    public Rule ImageWithMultiLineURL() {
+        return NodeSequence(
+                //NonindentSpace(), "![", MultiLineImageAlt(), ']',
+                '!', ImageAlt(),
+                Spn1(), '(', Sp(),
+                MultiLineLinkSource(),
+                MultiLineImageEnd(),
+                push(new ExpImageNode("", popAsString(), popAsNode()))
+        );
+    }
+
+    public Rule MultiLineURLImage() {
+        return Sequence(
+                Spn1(), '(', Sp(),
+                MultiLineLinkSource(),
+                MultiLineImageEnd(),
+                push(new ExpImageNode(popAsString(), popAsString(), popAsNode()))
+        );
+    }
+
+    @Cached
+    public Rule MultiLineImageEnd() {
+        return Sequence(
+                NonindentSpace(), FirstOf(Sequence(LinkTitle(), Sp()), push("")), ')', Sp(), Test(Newline())
+        );
+    }
+
+    @Cached
+    public Rule MultiLineLinkSource() {
+        StringBuilderVar url = new StringBuilderVar();
+        return Sequence(
+                OneOrMore(
+                        FirstOf(
+                                Sequence('\\', AnyOf("()?"), url.append(matchedChar())),
+                                Sequence(TestNot(AnyOf("()?")), Nonspacechar(), url.append(matchedChar()))
+                        )
+                ),
+                //debugMsg("MultiLineLinkSource pre ?", url.getString()),
+                Sequence(Sequence('?', Sp(), Newline()), url.append(match())),
+                //debugMsg("MultiLineLinkSource post ?", url.getString()),
+                OneOrMore(
+                        TestNot(MultiLineImageEnd()),
+                        ZeroOrMore(Sequence(NotNewline(), ANY, url.append(matchedChar()))),
+                        //debugMsg("MultiLineLinkSource post add line no eol:", url.getString()),
+                        Sequence(Newline(), url.append(match()))
+                        //debugMsg("MultiLineLinkSource post add line with eol:", url.getString())
+                ),
+                push(url.getString()), url.clearContents()
         );
     }
 
@@ -1277,7 +1339,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
                         TestNot(
                                 FirstOf(
                                         // vsch: don't allow emphasis or strikethrough in autolinks otherwise **name@address.com** gets parsed as ** 'name@address.com**' instead of ** 'name@address.com' **
-                                        AnyOf(ext(STRIKETHROUGH) ? "<*~>":"<*>"),
+                                        AnyOf(ext(STRIKETHROUGH) ? "<*~>" : "<*>"),
                                         Sequence(Optional(AnyOf(".,;:)}]\"'")), FirstOf(Spacechar(), Newline()))
                                 )
                         ) :

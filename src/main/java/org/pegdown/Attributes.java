@@ -1,5 +1,7 @@
 package org.pegdown;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -103,6 +105,19 @@ public class Attributes {
                 if (!classAttr.isEmpty()) {
                     printer.print(' ').print(name).print('=').print('"').print(attrMap.get(name).replace("\\", "\\\\").replace("\"", "\\\"")).print('"');
                 }
+            } else if (name.equals("src") || name.equals("href")) {
+                String url = attrMap.get(name).trim();
+                int pos = url.indexOf('?');
+                if (pos >= 0 && pos < url.length()) {
+                    // url encode the query part
+                    try {
+                        String query = url.substring(pos + 1);
+                        url = url.substring(0, pos + 1) + URLEncoder.encode(query, "UTF-8").replace("+","%20");
+                    } catch (UnsupportedEncodingException e) {
+                        e.printStackTrace();
+                    }
+                }
+                printer.print(' ').print(name).print('=').print('"').print(url).print('"');
             } else {
                 printer.print(' ').print(name).print('=').print('"').print(attrMap.get(name).replace("\\", "\\\\").replace("\"", "\\\"")).print('"');
             }

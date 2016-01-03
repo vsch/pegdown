@@ -170,8 +170,23 @@ public interface Extensions {
     static final int TOC = 0x02000000;
 
     /**
-     *  Enables adding a dummy reference key node to RefLink and RefImage so that the AST differs
-     *  between [ ][] and plain [ ] for refLink and ![ ][] and plain ![ ] for RefImage
+     * ![alt](.....?
+     *
+     * )
+     *
+     * ![alt](.....?
+     *
+     * "title")
+     *
+     * Enables MULTI_LINE_IMAGE_URLS extension which allows image urls of the form above.
+     * any text at all until ) or "title") at the begining of a line.
+     * Used for displaying UML diagrams with gravizo.com
+     */
+    static final int MULTI_LINE_IMAGE_URLS = 0x04000000;
+
+    /**
+     * Enables adding a dummy reference key node to RefLink and RefImage so that the AST differs
+     * between [ ][] and plain [ ] for refLink and ![ ][] and plain ![ ] for RefImage
      */
     static final int DUMMY_REFERENCE_KEY = 0x40000000;
 
@@ -183,11 +198,10 @@ public interface Extensions {
 
     /**
      * All Optionals other than Suppress and FORCELISTITEMPARA which is a backwards compatibility extension
-     *
      */
 
-    static final int ALL_OPTIONALS = (ATXHEADERSPACE  | RELAXEDHRULES | TASKLISTITEMS | EXTANCHORLINKS | FOOTNOTES);
-    static final int ALL_WITH_OPTIONALS = ALL | (ATXHEADERSPACE  | RELAXEDHRULES | TASKLISTITEMS | FOOTNOTES);
+    static final int ALL_OPTIONALS = (ATXHEADERSPACE | RELAXEDHRULES | TASKLISTITEMS | EXTANCHORLINKS | FOOTNOTES);
+    static final int ALL_WITH_OPTIONALS = ALL | (ATXHEADERSPACE | RELAXEDHRULES | TASKLISTITEMS | FOOTNOTES);
 
     /**
      * These are GitHub main repo document processing compatibility flags

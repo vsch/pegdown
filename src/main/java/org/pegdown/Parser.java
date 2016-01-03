@@ -130,12 +130,15 @@ public class Parser extends BaseParser<Object> implements Extensions {
     }
 
     public Rule Para() {
-        return NodeSequence(
-                // The Para Rule only tests for the presence of a following blank line, but does not consume it.
-                // this means that phantom \n's will not be part of the node's source range, except when
-                // the input had no EOL's at the end at all, even then only one of these will be included
-                NonindentSpace(), Inlines(), push(new ParaNode(popAsNode())), Test(BlankLine())
+        return Sequence(
+                NonindentSpace(),
+                NodeSequence(
+                        // The Para Rule only tests for the presence of a following blank line, but does not consume it.
+                        // this means that phantom \n's will not be part of the node's source range, except when
+                        // the input had no EOL's at the end at all, even then only one of these will be included
+                        Inlines(), push(new ParaNode(popAsNode())), Test(BlankLine())
 
+                )
         );
     }
 
@@ -144,8 +147,8 @@ public class Parser extends BaseParser<Object> implements Extensions {
     public Rule Footnote() {
         Var<FootnoteNode> node = new Var<FootnoteNode>();
         return Sequence(
+                NonindentSpace(),
                 NodeSequence(
-                        NonindentSpace(),
                         Sequence(
                                 FootnoteLabel(), Sp(), ':', Sp()
                         ),
@@ -243,12 +246,14 @@ public class Parser extends BaseParser<Object> implements Extensions {
     }
 
     public Rule HorizontalRule() {
-        return NodeSequence(
+        return Sequence(
                 NonindentSpace(),
-                FirstOf(HorizontalRule('*'), HorizontalRule('-'), HorizontalRule('_')),
-                Sp(), Newline(),
-                (ext(RELAXEDHRULES) ? EMPTY : Test(BlankLine())),
-                push(new SimpleNode(Type.HRule))
+                NodeSequence(
+                        FirstOf(HorizontalRule('*'), HorizontalRule('-'), HorizontalRule('_')),
+                        Sp(), Newline(),
+                        (ext(RELAXEDHRULES) ? EMPTY : Test(BlankLine())),
+                        push(new SimpleNode(Type.HRule))
+                )
         );
     }
 
@@ -1355,7 +1360,8 @@ public class Parser extends BaseParser<Object> implements Extensions {
     // here we exclude the EOL at the end from the node's text range
     public Rule Reference() {
         return Sequence(
-                ReferenceNoEOL(),
+                // vsch: moved NonindentSpace() outside of the ReferenceNode range, otherwise the leading spaces were included as part of the node range.
+                NonindentSpace(), ReferenceNoEOL(),
                 Newline()
         );
     }
@@ -1363,7 +1369,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
     public Rule ReferenceNoEOL() {
         Var<ReferenceNode> ref = new Var<ReferenceNode>();
         return NodeSequence(
-                NonindentSpace(), Label(), push(ref.setAndGet(new ReferenceNode(popAsNode()))),
+                Label(), push(ref.setAndGet(new ReferenceNode(popAsNode()))),
                 ':', Spn1(), RefSrc(ref),
                 Sp(), Optional(RefTitle(ref)),
                 Sp(),
@@ -1648,10 +1654,13 @@ public class Parser extends BaseParser<Object> implements Extensions {
 
     public Rule Abbreviation() {
         Var<AbbreviationNode> node = new Var<AbbreviationNode>();
-        return NodeSequence(
-                NonindentSpace(), '*', Label(), push(node.setAndGet(new AbbreviationNode(popAsNode()))),
-                Sp(), ':', Sp(), AbbreviationText(node),
-                abbreviations.add(node.get())
+        return Sequence(
+                NonindentSpace(),
+                NodeSequence(
+                        '*', Label(), push(node.setAndGet(new AbbreviationNode(popAsNode()))),
+                        Sp(), ':', Sp(), AbbreviationText(node),
+                        abbreviations.add(node.get())
+                )
         );
     }
 
@@ -1668,10 +1677,13 @@ public class Parser extends BaseParser<Object> implements Extensions {
     //*************** TOC *****************
 
     public Rule Toc() {
-        return NodeSequence("[TOC",
-                Optional(Sp(), "level=", Digit(), push(match())),
-                "]",
-                push(new TocNode(headers, peek() instanceof String ? Integer.parseInt(popAsString()) : 6))
+        return Sequence(
+                NonindentSpace(),
+                NodeSequence("[TOC",
+                        Optional(Sp(), "level=", Digit(), push(match())),
+                        "]",
+                        push(new TocNode(headers, peek() instanceof String ? Integer.parseInt(popAsString()) : 6))
+                )
         );
     }
 

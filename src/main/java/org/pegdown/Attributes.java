@@ -112,7 +112,8 @@ public class Attributes {
                     // url encode the query part
                     try {
                         String query = url.substring(pos + 1);
-                        url = url.substring(0, pos + 1) + URLEncoder.encode(query, "UTF-8").replace("+","%20");
+                        // reverse URL encoding of =, &
+                        url = url.substring(0, pos + 1) + URLEncoder.encode(query, "UTF-8").replace("+","%20").replace("%3D", "=").replace("%26", "&amp;");
                     } catch (UnsupportedEncodingException e) {
                         e.printStackTrace();
                     }

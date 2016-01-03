@@ -47,7 +47,7 @@ RootNode [0-942]
             TextNode [281-286] 'multi'
             SimpleNode [286-287] Linebreak
             TextNode [287-298] ' paragraph'
-  ParaNode [302-314]
+  ParaNode [304-314]
     SuperNode [304-314]
       TextNode [304-313] 'list item'
       SpecialTextNode [313-314] '!'

@@ -185,16 +185,29 @@ public interface Extensions {
     static final int MULTI_LINE_IMAGE_URLS = 0x04000000;
 
     /**
+     * These are all that's left of 32 bits in the not included in ALL.
+     */
+    static final int UNUSED_1 = 0x08000000;
+    static final int UNUSED_2 = 0x10000000;
+
+    /**
+     * Include \u001F in Letters() so that IntelliJ Code Completion Marker will be parsed as part of Identifier
+     * and all elements of markdown that allow Alphanumerics. Only needed by idea-multimarkdown.
+     *
+     * Also allows zerowidth labels for [^] for the same reason, so completions can work without
+     * typing any characters between the brackets
+     *
+     */
+    static final int INTELLIJ_DUMMY_IDENTIFIER = 0x20000000;
+
+    /**
      * Enables adding a dummy reference key node to RefLink and RefImage so that the AST differs
      * between [ ][] and plain [ ] for refLink and ![ ][] and plain ![ ] for RefImage
      */
     static final int DUMMY_REFERENCE_KEY = 0x40000000;
 
-    /**
-     * Include \u001F in Letters() so that IntelliJ Code Completion Marker will be parsed as part of Identifier
-     * and all elements of markdown that allow Alphanumerics. Only needed by idea-multimarkdown
-     */
-    static final int INTELLIJ_DUMMY_IDENTIFIER = 0x80000000;
+
+    static final int UNUSABLE = 0x80000000;
 
     /**
      * All Optionals other than Suppress and FORCELISTITEMPARA which is a backwards compatibility extension

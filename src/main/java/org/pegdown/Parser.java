@@ -167,7 +167,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
     }
 
     public Rule FootnoteLabel() {
-        return Sequence("[^", OneOrMore(AlphanumericDashUnderDot()), ']');
+        return Sequence("[^", ext(INTELLIJ_DUMMY_IDENTIFIER) ? ZeroOrMore(AlphanumericDashUnderDot()) : OneOrMore(AlphanumericDashUnderDot()), ']');
     }
 
     // vsch: #184 modified to only include trailing blank lines if there are more blocks for the blockquote following
@@ -1297,7 +1297,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
     public Rule WikiLink() {
         return Sequence(
                 "[[",
-                OneOrMore(TestNot(Sequence(']', ']')), ANY), // might have to restrict from ANY
+                ext(INTELLIJ_DUMMY_IDENTIFIER) ? ZeroOrMore(TestNot(Sequence(']', ']')), ANY):OneOrMore(TestNot(Sequence(']', ']')), ANY), // might have to restrict from ANY
                 push(new WikiLinkNode(match())),
                 "]]"
         );
@@ -1352,7 +1352,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
                 (ext(FOOTNOTES) ? TestNot('^') : EMPTY),
                 checkForParsingTimeout(),
                 push(new SuperNode()),
-                OneOrMore(TestNot(']'), NonAutoLinkInline(), addAsChild()),
+                ext(INTELLIJ_DUMMY_IDENTIFIER) ? ZeroOrMore(TestNot(']'), NonAutoLinkInline(), addAsChild()) : OneOrMore(TestNot(']'), NonAutoLinkInline(), addAsChild()),
                 ']'
         );
     }

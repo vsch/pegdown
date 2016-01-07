@@ -341,7 +341,8 @@ public class ToHtmlSerializer implements Visitor, HeaderIdComputer {
 
     public void visit(RefImageNode node) {
         String text = printChildrenToString(node);
-        String key = node.referenceKey != null ? printChildrenToString(node.referenceKey) : text;
+        // vsch: here we can have a ReferenceNode.DUMMY_REFERENCE_KEY which will have no children
+        String key = node.referenceKey != null && node.referenceKey.getChildren().size() != 0 ? printChildrenToString(node.referenceKey) : text;
         ReferenceNode refNode = references.get(normalize(key));
         if (refNode == null) { // "fake" reference image link
             printer.print("![").print(text).print(']');
@@ -355,7 +356,8 @@ public class ToHtmlSerializer implements Visitor, HeaderIdComputer {
 
     public void visit(RefLinkNode node) {
         String text = printChildrenToString(node);
-        String key = node.referenceKey != null ? printChildrenToString(node.referenceKey) : text;
+        // vsch: here we can have a ReferenceNode.DUMMY_REFERENCE_KEY which will have no children
+        String key = node.referenceKey != null && node.referenceKey.getChildren().size() != 0 ? printChildrenToString(node.referenceKey) : text;
         ReferenceNode refNode = references.get(normalize(key));
         if (refNode == null) { // "fake" reference link
             printer.print('[').print(text).print(']');

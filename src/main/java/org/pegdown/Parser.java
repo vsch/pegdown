@@ -1245,7 +1245,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
                                         Sequence("[]", push(ext(DUMMY_REFERENCE_KEY) ? ReferenceNode.DUMMY_REFERENCE_KEY : null)) // implicit reference link
                                 )
                         ),
-                        Sequence(push(null), push(null)) // implicit referencelink without trailing []
+                        Sequence(push(null), push(null)) // implicit reference link without trailing []
                 ),
                 push(image ?
                         new RefImageNode((SuperNode) popAsNode(), popAsString(), popAsNode()) :

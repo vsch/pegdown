@@ -891,15 +891,10 @@ public class Parser extends BaseParser<Object> implements Extensions {
         );
     }
 
-    public Rule NonAutoLinkInline() {
-        return FirstOf(NonAutoLink(), NonLinkInline());
-    }
-
     public Rule NonLinkInline() {
         return FirstOf(new ArrayBuilder<Rule>()
                 .add(plugins.getInlinePluginRules())
-                .add(Str(), Endline(), UlOrStarLine(), Space(), StrongOrEmph(), Image(), Code(), InlineHtml(),
-                        Entity(), EscapedChar())
+                .add(Str(), Endline(), UlOrStarLine(), Space(), StrongOrEmph(), Image(), Code(), InlineHtml(), Entity(), EscapedChar())
                 .addNonNulls(ext(QUOTES) ? new Rule[] { SingleQuoted(), DoubleQuoted(), DoubleAngleQuoted() } : null)
                 .addNonNulls(ext(SMARTS) ? new Rule[] { Smarts() } : null)
                 .addNonNulls(ext(STRIKETHROUGH) ? new Rule[] { Strike() } : null)
@@ -1216,10 +1211,6 @@ public class Parser extends BaseParser<Object> implements Extensions {
         );
     }
 
-    public Rule NonAutoLink() {
-        return NodeSequence(Sequence(Label(), FirstOf(ExplicitLink(false), ReferenceLink(false))));
-    }
-
     @Cached
     public Rule ExplicitLink(boolean image) {
         return Sequence(
@@ -1297,7 +1288,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
     public Rule WikiLink() {
         return Sequence(
                 "[[",
-                ext(INTELLIJ_DUMMY_IDENTIFIER) ? ZeroOrMore(TestNot(Sequence(']', ']')), ANY):OneOrMore(TestNot(Sequence(']', ']')), ANY), // might have to restrict from ANY
+                ext(INTELLIJ_DUMMY_IDENTIFIER) ? ZeroOrMore(TestNot(FirstOf("]]", BlankLine())), ANY) : OneOrMore(TestNot(FirstOf("]]", BlankLine())), ANY), // might have to restrict from ANY
                 push(new WikiLinkNode(match())),
                 "]]"
         );
@@ -1335,26 +1326,57 @@ public class Parser extends BaseParser<Object> implements Extensions {
 
     //************* REFERENCE ****************
 
+    public Rule NonAutoLink() {
+        return NodeSequence(Sequence(Label(), FirstOf(ExplicitLink(false), ReferenceLink(false))));
+    }
+
+    public Rule NonAutoLinkInline() {
+        return FirstOf(NonAutoLink(), NonLinkInline());
+    }
+
     // can't treat labels the same as the image alt since the image alt should be able to empty.
     public Rule ImageAlt() {
         return Sequence(
                 '[',
                 checkForParsingTimeout(),
                 push(new SuperNode()),
-                ZeroOrMore(TestNot(']'), NonAutoLinkInline(), addAsChild()),
+                ZeroOrMore(TestNot(']'), NonLinkInline(), addAsChild()),
                 ']'
         );
     }
 
     public Rule Label() {
-        return Sequence(
-                '[',
-                (ext(FOOTNOTES) ? TestNot('^') : EMPTY),
-                checkForParsingTimeout(),
-                push(new SuperNode()),
-                ext(INTELLIJ_DUMMY_IDENTIFIER) ? ZeroOrMore(TestNot(']'), NonAutoLinkInline(), addAsChild()) : OneOrMore(TestNot(']'), NonAutoLinkInline(), addAsChild()),
-                ']'
-        );
+        return
+                FirstOf(
+                        Sequence(
+                                '[',
+                                (ext(FOOTNOTES) ? TestNot('^') : EMPTY),
+                                checkForParsingTimeout(),
+                                push(new SuperNode()),
+                                OneOrMore(TestNot(']'), NonAutoLinkInline(), addAsChild()),
+                                ']'
+                        ),
+                        ext(INTELLIJ_DUMMY_IDENTIFIER) ?
+                                Sequence("[]", Test(FirstOf(Sequence(':', Spn1()), NonEmptyLabel(), "[]", Sequence(Spn1(), '(', Sp(),
+                                        LinkSource(),
+                                        Spn1(), FirstOf(LinkTitle(), push("")),
+                                        Sp(), ')'))),
+                                        push(new SuperNode())
+                                )
+                                : NOTHING
+                );
+    }
+
+    public Rule NonEmptyLabel() {
+        return
+                Sequence(
+                        '[',
+                        (ext(FOOTNOTES) ? TestNot('^') : EMPTY),
+                        checkForParsingTimeout(),
+                        push(new SuperNode()),
+                        OneOrMore(TestNot(']'), NonLinkInline(), addAsChild()),
+                        ']'
+                );
     }
 
     // here we exclude the EOL at the end from the node's text range

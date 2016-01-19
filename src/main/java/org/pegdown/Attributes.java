@@ -7,8 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 
 public class Attributes {
-    public final HashMap<String, String> attrMap = new HashMap<String, String>();
-    public final ArrayList<String> attrOrder = new ArrayList<String>();
+    final HashMap<String, String> attrMap = new HashMap<String, String>();
+    final ArrayList<String> attrOrder = new ArrayList<String>();
 
     public Attributes() {
     }
@@ -96,31 +96,39 @@ public class Attributes {
         return attrMap.get(attribute);
     }
 
+    public void remove(String attribute) {
+        if (attrMap.containsKey(attribute)) {
+            attrMap.remove(attribute);
+            attrOrder.remove(attribute);
+        }
+    }
+
     // vsch: NOTE: only lowercase "class" attribute is trimmed and skipped if it is empty, the rest are output as is, if you want something else take care of it in preview()
     void print(Printer printer) {
         for (String name : attrOrder) {
             assert attrMap.containsKey(name) : "Unexpected, key: " + name + " is not in attrMap, must have been manipulated outside of Attribute class";
+            String value = attrMap.get(name).trim();
             if (name.equals("class")) {
                 String classAttr = attrMap.get(name).trim();
                 if (!classAttr.isEmpty()) {
                     printer.print(' ').print(name).print('=').print('"').print(attrMap.get(name).replace("\\", "\\\\").replace("\"", "\\\"")).print('"');
                 }
-            } else if (name.equals("src") || name.equals("href")) {
-                String url = attrMap.get(name).trim();
-                int pos = url.indexOf('?');
-                if (pos >= 0 && pos < url.length()) {
+            } else if ((name.equals("src") || name.equals("href")) && value.contains("\n")) {
+                // multi-line URL, needs URL encoding
+                int pos = value.indexOf('?');
+                if (pos >= 0 && pos < value.length()) {
                     // url encode the query part
                     try {
-                        String query = url.substring(pos + 1);
+                        String query = value.substring(pos + 1);
                         // reverse URL encoding of =, &
-                        url = url.substring(0, pos + 1) + URLEncoder.encode(query, "UTF-8").replace("+","%20").replace("%3D", "=").replace("%26", "&amp;");
+                        value = value.substring(0, pos + 1) + URLEncoder.encode(query, "UTF-8").replace("+", "%20").replace("%3D", "=").replace("%26", "&amp;");
                     } catch (UnsupportedEncodingException e) {
                         e.printStackTrace();
                     }
                 }
-                printer.print(' ').print(name).print('=').print('"').print(url).print('"');
+                printer.print(' ').print(name).print('=').print('"').print(value).print('"');
             } else {
-                printer.print(' ').print(name).print('=').print('"').print(attrMap.get(name).replace("\\", "\\\\").replace("\"", "\\\"")).print('"');
+                printer.print(' ').print(name).print('=').print('"').print(value.replace("\\", "\\\\").replace("\"", "\\\"")).print('"');
             }
         }
     }

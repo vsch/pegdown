@@ -52,6 +52,10 @@ public class RootNode extends SuperNode {
         //AbstractNode.mapIndices(ixMap, footnotes);
     }
 
+    public RootNode(List<Node> children) {
+        super(children);
+    }
+
     public RootNode(List<Node> children, List<ReferenceNode> references, List<AbbreviationNode> abbreviations, List<FootnoteNode> footnotes) {
         super(children);
         this.references = references;

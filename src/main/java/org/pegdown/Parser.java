@@ -299,7 +299,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
         );
     }
 
-    // vsch: spaces are allowed after the Atx --- or === and before the newline
+    // vsch: spaces are allowed after the Setext --- or === and before the newline
     //
     // straight from <http://docutils.sourceforge.net/mirror/setext/sermon_1+920315.etx.txt>
     //
@@ -894,7 +894,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
     public Rule NonLinkInline() {
         return FirstOf(new ArrayBuilder<Rule>()
                 .add(plugins.getInlinePluginRules())
-                .add(Str(), Endline(), UlOrStarLine(), Space(), StrongOrEmph(), Image(), Code(), InlineHtml(), Entity(), EscapedChar())
+                .add(Str(), Endline(), UlOrStarLine(), Spaces(), StrongOrEmph(), Image(), Code(), InlineHtml(), Entity(), EscapedChar())
                 .addNonNulls(ext(QUOTES) ? new Rule[] { SingleQuoted(), DoubleQuoted(), DoubleAngleQuoted() } : null)
                 .addNonNulls(ext(SMARTS) ? new Rule[] { Smarts() } : null)
                 .addNonNulls(ext(STRIKETHROUGH) ? new Rule[] { Strike() } : null)
@@ -1535,8 +1535,8 @@ public class Parser extends BaseParser<Object> implements Extensions {
         return NodeSequence(OneOrMore(NormalChar()), push(new TextNode(match())));
     }
 
-    public Rule Space() {
-        return NodeSequence(OneOrMore(Spacechar()), push(new TextNode(" ")));
+    public Rule Spaces() {
+        return NodeSequence(OneOrMore(Spacechar()), push(new TextNode(match())));
     }
 
     public Rule Spn1() {

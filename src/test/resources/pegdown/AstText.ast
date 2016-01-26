@@ -46,7 +46,7 @@ RootNode [0-942]
           SuperNode [281-298]
             TextNode [281-286] 'multi'
             SimpleNode [286-287] Linebreak
-            TextNode [287-298] ' paragraph'
+            TextNode [287-298] '  paragraph'
   ParaNode [304-314]
     SuperNode [304-314]
       TextNode [304-313] 'list item'
@@ -103,18 +103,18 @@ RootNode [0-942]
     TableHeaderNode [737-761]
       TableRowNode [737-761]
         TableCellNode [737-747]
-          TextNode [737-747] 'Header 1 '
+          TextNode [737-747] 'Header 1  '
         TableCellNode [748-759]
-          TextNode [749-759] 'Header 2 '
+          TextNode [749-759] 'Header 2  '
     TableBodyNode [785-832]
       TableRowNode [785-809]
         TableCellNode [785-795]
-          TextNode [785-795] 'Cell '
+          TextNode [785-795] 'Cell      '
         TableCellNode [796-807]
-          TextNode [797-807] 'Cell '
+          TextNode [797-807] 'Cell      '
       TableRowNode [809-832]
         TableCellNode [809-819]
-          TextNode [809-819] 'Cell '
+          TextNode [809-819] 'Cell      '
         TableCellNode [820-825]
           TextNode [821-825] 'Cell'
     TableCaptionNode [833-847]

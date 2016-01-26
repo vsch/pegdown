@@ -32,6 +32,8 @@ This function is also called for VerbatimNode from the DefaultVerbatimSerializer
 
 - Added MULTI_LINE_IMAGE_URLS extension to handle parsing of multiline image urls.
 
+- Fix Inlines rule would convert consecutive spaces to a single space, effectively changing the serialized text from what was given in the source.
+
 
 Version 1.6.0 (2015-09-18)
 --------------------------

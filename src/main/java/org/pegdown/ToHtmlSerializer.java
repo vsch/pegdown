@@ -238,7 +238,7 @@ public class ToHtmlSerializer implements Visitor, HeaderIdComputer {
         if (anchorLinkNode != null && !anchorLinkNode.getName().equals(anchorId)) {
             nSkipFirst = 1;
             if (!anchorId.isEmpty()) {
-                insertFirstChild = new AnchorLinkNode(anchorId, anchorLinkNode.getText());
+                insertFirstChild = new AnchorLinkNode(anchorId, anchorLinkNode.getText(), "");
                 insertFirstChild.setStartIndex(anchorLinkNode.getStartIndex());
                 insertFirstChild.setEndIndex(anchorLinkNode.getEndIndex());
             }

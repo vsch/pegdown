@@ -30,7 +30,7 @@ RootNode [0-403]
       SpecialTextNode [128-129] ':'
       TextNode [129-161] ' Footnote 2 with a bit more text'
       SimpleNode [161-162] Linebreak
-      TextNode [162-195] ' and another continuation line'
+      TextNode [162-195] '    and another continuation line'
   ParaNode [201-217]
     SuperNode [201-217]
       RefLinkNode [201-205]

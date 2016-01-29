@@ -3,36 +3,73 @@ Version after 1.6.0
 
 ### The following are added to allow easy customization of ToHtmlSerializer without rewriting it.
 
-NOTE: these changes are backwards compatible if you don't override the new functions or you can override them to customize the HTML output
-        or leave it as is to get the old behaviour.
+NOTE: these changes are backwards compatible if you don't override the new functions or
+      you can override them to customize the HTML output or leave it as is to get the old behaviour.
 
-- Added `preview(Node node, String tag, Attributes attributes, boolean tocGenerationVisit)` to `ToHtmlSerializer`, called before every node that has a tag so that derived classes can modify attributes output in the HTML, returned attributes will be output in the order they were added to Attributes. Re-use the passed in parameter or create a new one.
+- Added `preview(Node node, String tag, Attributes attributes, boolean tocGenerationVisit)`
+    to `ToHtmlSerializer`, called before every node that has a tag so that derived classes
+    can modify attributes output in the HTML, returned attributes will be output in the
+    order they were added to Attributes. Re-use the passed in parameter or create a new one.
 
-- Added `Printer.preview(node, String tag, attributes, boolean tocGenerationVisit)` to Printer so that the serializer's preview() can be accessed by plugins and verbatim serializers. Together with Attributes methods you can change classes, add attributes based on tags and node parameters without rewriting the whole serializer.
+- Added `Printer.preview(node, String tag, attributes, boolean tocGenerationVisit)` to Printer
+    so that the serializer's preview() can be accessed by plugins and verbatim serializers.
+    Together with Attributes methods you can change classes, add attributes based on tags and
+    node parameters without rewriting the whole serializer.
 
-    Note: `tocGenerationVisit` will be true if the output is for TOC rendering. You will get the same nodes once with `tocGenerationVisit` true and once false for nodes that are part of TOC headers. In all cases the passed in attributes contain the default attributes as they are now rendered by ToHtmlSerializer. If you return them unmolested, you will get output as it is now.
+    Note: `tocGenerationVisit` will be true if the output is for TOC rendering. You will get
+        the same nodes once with `tocGenerationVisit` true and once false for nodes that are
+        part of TOC headers. In all cases the passed in attributes contain the default
+        attributes as they are now rendered by ToHtmlSerializer. If you return them unmolested,
+        you will get output as it is now.
 
-- Added `ToHtmlSerializer.printTaskListItemMarker(Printer printer, TaskListNode node, boolean isParaWrapped)` that prints the task list item marker, default prints an input checkbox, `isParaWrapped` is true when the contents of `li` tag are wrapped in `<p></p>` just in case it makes a difference to what you want to output.
+- Added `ToHtmlSerializer.printTaskListItemMarker(Printer printer, TaskListNode node, boolean isParaWrapped)`
+    that prints the task list item marker, default prints an input checkbox, `isParaWrapped`
+    is true when the contents of `li` tag are wrapped in `<p></p>` just in case it makes a
+    difference to what you want to output.
 
-- Changed `DefaultVerbatimSerializer` to also print attributes returned by the call to `preview()` before closing the <code tag. Passed in attributes will contain the class of the node.getType() value.
+- Changed `DefaultVerbatimSerializer` to also print attributes returned by the call to `preview()`
+    before closing the <code tag. Passed in attributes will contain the class of the node.getType() value.
 
-- Added `String computeHeaderId(HeaderNode node, AnchorLinkNode anchorLinkNode, String headerText)` to `ToHtmlSerializer` called before generating any HTML in the top most RootNode processing for all headers, depth first traversal. Returning an empty string will output Header without id attribute. Returning any other value will output header with that id and if there is an anchor link it will also change its reference and name attribute to match the returned value. Use this to override how anchor link references are generated. Additional benefit if you override this function is that you will always know what id to expect for the header and can generate the right reference.
+- Added `String computeHeaderId(HeaderNode node, AnchorLinkNode anchorLinkNode, String headerText)`
+    to `ToHtmlSerializer` called before generating any HTML in the top most RootNode processing
+    for all headers, depth first traversal. Returning an empty string will output Header without
+    id attribute. Returning any other value will output header with that id and if there is an
+    anchor link it will also change its reference and name attribute to match the returned value.
+    Use this to override how anchor link references are generated. Additional benefit if you override
+    this function is that you will always know what id to expect for the header and can generate the
+    right reference.
 
-This way you can create your own logic for generating the reference link ids to match your requirements by overriding only a single member of ToHtmlSerializer. Similarly, to change the way task lists are generated it is also a single override.
+This way you can create your own logic for generating the reference link ids to match your requirements
+    by overriding only a single member of ToHtmlSerializer. Similarly, to change the way task lists are
+    generated it is also a single override.
 
-In addition, another member override: `preview(...)` that passes the node, the node's tag and current attribute set will allow you to add/remove/append class or any other attribute. By default the class that implements `Attributes` can handle multiple calls to add(name, value) with the same name. It will append value as a space delimited list. So out of the box you can just add("class", whateverClass) to attributes for nodes of your choice to add extra classes.
+In addition, another member override: `preview(...)` that passes the node, the node's tag and
+    current attribute set will allow you to add/remove/append class or any other attribute. By default
+    the class that implements `Attributes` can handle multiple calls to add(name, value) with the same
+    name. It will append value as a space delimited list. So out of the box you can just
+    add("class", whateverClass) to attributes for nodes of your choice to add extra classes.
 
-This function is also called for VerbatimNode from the DefaultVerbatimSerializer so you can add/remove/change the class assigned to `<code>`.
+This function is also called for VerbatimNode from the DefaultVerbatimSerializer so you can
+    add/remove/change the class assigned to `<code>`.
 
-- Fixed autolinks included trailing emphasis characters so `**name@email.com**` would parse as ** 'name@email.com**' instead of ** 'name@emal.com' ** bold email, same for links. Now emphasis (and strikethrough if selected in options) markers are excluded from the trailing autolink text.
+- Fixed autolinks included trailing emphasis characters so `**name@email.com**` would parse
+    as ** 'name@email.com**' instead of ** 'name@emal.com' ** bold email, same for links.
+    Now emphasis (and strikethrough if selected in options) markers are excluded from
+    the trailing autolink text.
 
-- Fixed task list items would create an erroneous AST if the space after the `[ ]` or `[x]` was left out which should parse as not a task list item but a normal bullet item.
+- Fixed task list items would create an erroneous AST if the space after the `[ ]` or `[x]`
+    was left out which should parse as not a task list item but a normal bullet item.
 
-- Added DUMMY_REFERENCE_KEY Extension option to cause the parser to use the ReferenceNode.DUMMY_REFERENCE_KEY for RefLink and RefImage referenceKey when markdown contains [] reference, as in [...][] and ![...][]. Otherwise there is no way to tell the difference between [ ][] and [ ] or ![ ][] and ![ ] just from the AST.
+- Added DUMMY_REFERENCE_KEY Extension option to cause the parser to use the
+    ReferenceNode.DUMMY_REFERENCE_KEY for RefLink and RefImage referenceKey when
+    markdown contains [] reference, as in [...][] and ![...][]. Otherwise there
+    is no way to tell the difference between [ ][] and [ ] or ![ ][] and ![ ] just
+    from the AST.
 
 - Added MULTI_LINE_IMAGE_URLS extension to handle parsing of multiline image urls.
 
-- Fix Inlines rule would convert consecutive spaces to a single space, effectively changing the serialized text from what was given in the source.
+- Fix Inlines rule would convert consecutive spaces to a single space, effectively
+    changing the serialized text from what was given in the source.
 
 
 Version 1.6.0 (2015-09-18)

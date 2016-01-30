@@ -71,6 +71,8 @@ This function is also called for VerbatimNode from the DefaultVerbatimSerializer
 - Fix Inlines rule would convert consecutive spaces to a single space, effectively
     changing the serialized text from what was given in the source.
 
+- Added RELAXED_STRONG_EMPHASIS_RULES to allow Strong/Emphasis marks to start when not
+    preceded by alphanumeric instead of only when preceded by spaces
 
 Version 1.6.0 (2015-09-18)
 --------------------------

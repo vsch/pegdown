@@ -1074,9 +1074,28 @@ public class Parser extends BaseParser<Object> implements Extensions {
             lastClass = lastItem.getClass();
         }
 
-        return (TextNode.class.equals(lastClass) && ((TextNode) lastItem).getText().endsWith(" "))
-                || (SimpleNode.class.equals(lastClass))
-                || (java.lang.Integer.class.equals(lastClass));
+        if (ext(RELAXED_STRONG_EMPHASIS_RULES)) {
+            return (TextNode.class.equals(lastClass) && endsWithNonAlphaNum(((TextNode) lastItem).getText()))
+                    || (SpecialTextNode.class.equals(lastClass) && endsWithNonAlphaNum(((SpecialTextNode) lastItem).getText()))
+                    || (SimpleNode.class.equals(lastClass))
+                    || (java.lang.Integer.class.equals(lastClass));
+        } else {
+            return (TextNode.class.equals(lastClass) && ((TextNode) lastItem).getText().endsWith(" "))
+                    || (SimpleNode.class.equals(lastClass))
+                    || (java.lang.Integer.class.equals(lastClass));
+        }
+    }
+
+    protected boolean endsWithNonAlphaNum(String text) {
+        int pos = text.length() - 1;
+
+        char c = '*';
+        while (pos >= 0) {
+            c = text.charAt(pos);
+            if (c != '*' && c != '_') break;
+            pos--;
+        }
+        return !Character.isLetterOrDigit(c) && c != '*' && c != '_';
     }
 
     /**

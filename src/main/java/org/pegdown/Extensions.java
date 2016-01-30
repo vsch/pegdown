@@ -188,7 +188,12 @@ public interface Extensions {
      * These are all that's left of 32 bits in the not included in ALL.
      */
     static final int UNUSED_1 = 0x08000000;
-    static final int UNUSED_2 = 0x10000000;
+
+    /**
+     * allows Strong/Emphasis marks to start when not preceded by alphanumeric
+     * instead of only when preceded by spaces
+     */
+    static final int RELAXED_STRONG_EMPHASIS_RULES = 0x10000000;
 
     /**
      * Include \u001F in Letters() so that IntelliJ Code Completion Marker will be parsed as part of Identifier
@@ -219,7 +224,7 @@ public interface Extensions {
     /**
      * These are GitHub main repo document processing compatibility flags
      */
-    static final int GITHUB_DOCUMENT_COMPATIBLE = (FENCED_CODE_BLOCKS | TABLES | AUTOLINKS | ANCHORLINKS | TASKLISTITEMS | STRIKETHROUGH | ATXHEADERSPACE | RELAXEDHRULES);
+    static final int GITHUB_DOCUMENT_COMPATIBLE = (FENCED_CODE_BLOCKS | TABLES | AUTOLINKS | ANCHORLINKS | TASKLISTITEMS | STRIKETHROUGH | ATXHEADERSPACE | RELAXEDHRULES | RELAXED_STRONG_EMPHASIS_RULES);
 
     /**
      * These are GitHub wiki page processing compatibility flags

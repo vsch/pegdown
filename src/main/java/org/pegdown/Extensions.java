@@ -190,8 +190,8 @@ public interface Extensions {
     static final int UNUSED_1 = 0x08000000;
 
     /**
-     * allows Strong/Emphasis marks to start when not preceded by alphanumeric
-     * instead of only when preceded by spaces
+     * allow Strong/Emphasis marks to start when not preceded by alphanumeric for _ and
+     * as long as not surrounded by spaces for * instead of only when preceded by spaces.
      */
     static final int RELAXED_STRONG_EMPHASIS_RULES = 0x10000000;
 

@@ -1026,7 +1026,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
                                 TestNot(Spacechar()),
                                 NotNewline(),
                                 chars,
-                                FirstOf((chars.length() == 2), TestNot(Alphanumeric()))
+                                FirstOf((ext(RELAXED_STRONG_EMPHASIS_RULES) ? chars.charAt(0) != '_' : chars.length() == 2), TestNot(Alphanumeric()))
                         )
                 )
         );
@@ -1038,7 +1038,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
      * direct child.
      */
     protected boolean mayEnterEmphOrStrong(String chars) {
-        if (!isLegalEmphOrStrongStartPos()) {
+        if (!isLegalEmphOrStrongStartPos(chars)) {
             return false;
         }
 
@@ -1056,7 +1056,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
      * This method checks if current position is a legal start position for a
      * strong or emph sequence by checking the last parsed character(-sequence).
      */
-    protected boolean isLegalEmphOrStrongStartPos() {
+    protected boolean isLegalEmphOrStrongStartPos(String chars) {
         if (currentIndex() == 0)
             return true;
 
@@ -1075,8 +1075,8 @@ public class Parser extends BaseParser<Object> implements Extensions {
         }
 
         if (ext(RELAXED_STRONG_EMPHASIS_RULES)) {
-            return (TextNode.class.equals(lastClass) && endsWithNonAlphaNum(((TextNode) lastItem).getText()))
-                    || (SpecialTextNode.class.equals(lastClass) && endsWithNonAlphaNum(((SpecialTextNode) lastItem).getText()))
+            return (TextNode.class.equals(lastClass) && allowStrongEmphasisStart(chars, ((TextNode) lastItem).getText()))
+                    || (SpecialTextNode.class.equals(lastClass) && allowStrongEmphasisStart(chars, ((SpecialTextNode) lastItem).getText()))
                     || (SimpleNode.class.equals(lastClass))
                     || (java.lang.Integer.class.equals(lastClass));
         } else {
@@ -1086,16 +1086,10 @@ public class Parser extends BaseParser<Object> implements Extensions {
         }
     }
 
-    protected boolean endsWithNonAlphaNum(String text) {
+    protected boolean allowStrongEmphasisStart(String chars, String text) {
         int pos = text.length() - 1;
-
-        char c = '*';
-        while (pos >= 0) {
-            c = text.charAt(pos);
-            if (c != '*' && c != '_') break;
-            pos--;
-        }
-        return !Character.isLetterOrDigit(c) && c != '*' && c != '_';
+        char c = pos >= 0 ? text.charAt(pos) : '_';
+        return chars.charAt(0) != '_' || (!Character.isLetterOrDigit(c) && c != '_');
     }
 
     /**

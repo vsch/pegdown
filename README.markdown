@@ -36,7 +36,7 @@ Currently _pegdown_ supports the following extensions over standard Markdown:
 * `TOC`: used to enable table of contents extension `[TOC]` or `[TOC level=n]` where n is 1..6, corresponding to max header level to include in the table of contents. This element must be the first one on a line to be recognized.
 * `DUMMY_REFERENCE_KEY`: to make the parser use the `ReferenceNode.DUMMY_REFERENCE_KEY` instead of `null` for `RefLink` and `RefImage` `referenceKey` when markdown contains `[]` as the reference, as in `[...][]` and `![...][]`. Otherwise there is no way to tell the difference between `[ ][]` and `[ ]` or `![ ][]` and `![ ]` from the AST.
 * `MULTI_LINE_IMAGE_URLS`: enables parsing of image urls spanning more than one line the format is strict `![alt text](urladdress?` must be the last non-blank segment on a line. The terminating `)` or `"title")` must be the first non-indented segment on the line. Everything in between is sucked up as part of the URL. EVERYTHING, including blank lines.
-* `RELAXED_STRONG_EMPHASIS_RULES`: allows Strong/Emphasis marks to start when not preceded by alphanumeric instead of only when preceded by spaces
+* `RELAXED_STRONG_EMPHASIS_RULES`: allow Strong/Emphasis marks to start when not preceded by alphanumeric for `_` and as long as not surrounded by spaces for `*` instead of only when preceded by spaces.
 * `FOOTNOTES`: Support MultiMarkdown style footnotes: `[^n] for footnote reference` and `[^n]: Footnote text` for footnotes. Where `n` is one or more digit, letter, `-`, `_` or `.`. Footnotes will be put at the bottom of the page, sequentially numbered in order of appearance of the footnote reference. Footnotes that are not referenced will NOT be included in the HTML output.  
 
     ```markdown

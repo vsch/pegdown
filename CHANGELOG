@@ -75,6 +75,8 @@ This function is also called for VerbatimNode from the DefaultVerbatimSerializer
     preceded by alphanumeric for _ and as long as not surrounded by spaces for * instead
     of only when preceded by spaces.
 
+- Added allowing code fenced blocks with all blank lines
+
 Version 1.6.0 (2015-09-18)
 --------------------------
 - Fixed collision between ANCHORLINKS and STRIKETHROUGH, WIKILINKS extensions (#161)

@@ -222,12 +222,14 @@ public class Parser extends BaseParser<Object> implements Extensions {
         Var<Integer> markerLength = new Var<Integer>();
         return NodeSequence(
                 // vsch: test to see if what appears to be a code fence is just inline code
+                // vsch: change to accept code fence with all blank lines
                 CodeFence(markerLength),
-                TestNot(CodeFence(markerLength)), // prevent empty matches
-                ZeroOrMore(BlankLine(), text.append('\n')),
-                OneOrMore(TestNot(Newline(), CodeFence(markerLength)), ANY, text.append(matchedChar())),
-                Newline(),
-                push(new VerbatimNode(text.appended('\n').getString(), popAsString())),
+                OneOrMore(
+                        TestNot(CodeFence(markerLength)),
+                        ZeroOrMore(TestNot(Newline()), ANY, text.append(matchedChar())),
+                        Sequence(Newline(), text.append(matchedChar()))
+                ),
+                push(new VerbatimNode(text.getString(), popAsString())),
                 CodeFence(markerLength), drop()
         );
     }
@@ -1461,8 +1463,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
                         FirstOf(
                                 Sequence(TestNot('`'), Nonspacechar()),
                                 Sequence(TestNot(ticks), OneOrMore('`')),
-                                Sequence(TestNot(Sp(), ticks),
-                                        FirstOf(Spacechar(), Sequence(Newline(), TestNot(BlankLine()))))
+                                Sequence(TestNot(Sp(), ticks), FirstOf(Spacechar(), Sequence(Newline(), TestNot(BlankLine()))))
                         )
                 ),
                 push(new CodeNode(match())),

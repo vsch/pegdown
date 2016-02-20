@@ -584,7 +584,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
         return Sequence(
                 push(getContext().getCurrentIndex()),
                 FirstOf(CrossedOut(BlankLine(), block), tight.set(true)),
-                CrossedOut(itemStart, block), Optional(CrossedOut(FirstOf(Sequence("[ ] ", taskType.set(1)), Sequence(FirstOf("[x] ", "[X] "), taskType.set(2))), taskListMarker)),
+                CrossedOut(itemStart, block), Optional(CrossedOut(FirstOf(Sequence("[ ] ", Sp(), taskType.set(1)), Sequence(FirstOf("[x] ", "[X] "), Sp(), taskType.set(2))), taskListMarker)),
                 block.append(taskListMarker.getString()), Line(block),
                 //debugMsg("have a " + taskType.get() + " task list body", block.getString()),
                 ZeroOrMore(

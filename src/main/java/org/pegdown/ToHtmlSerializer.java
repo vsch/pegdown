@@ -219,7 +219,7 @@ public class ToHtmlSerializer implements Visitor, HeaderIdComputer {
         boolean startWasNewLine = printer.endsWithNewLine();
         String tag = "h" + node.getLevel();
         Attributes attributes = new Attributes();
-        AnchorLinkNode insertFirstChild = null;
+        TextNode insertFirstChild = null;
         int nSkipFirst = 0;
         AnchorLinkNode anchorLinkNode = null;
 
@@ -239,6 +239,10 @@ public class ToHtmlSerializer implements Visitor, HeaderIdComputer {
             nSkipFirst = 1;
             if (!anchorId.isEmpty()) {
                 insertFirstChild = new AnchorLinkNode(anchorId, anchorLinkNode.getText(), "");
+                insertFirstChild.setStartIndex(anchorLinkNode.getStartIndex());
+                insertFirstChild.setEndIndex(anchorLinkNode.getEndIndex());
+            } else {
+                insertFirstChild = new TextNode(anchorLinkNode.getText());
                 insertFirstChild.setStartIndex(anchorLinkNode.getStartIndex());
                 insertFirstChild.setEndIndex(anchorLinkNode.getEndIndex());
             }

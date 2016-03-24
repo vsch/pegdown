@@ -80,6 +80,8 @@ This function is also called for VerbatimNode from the DefaultVerbatimSerializer
 - Fix task list items would only allow a maximum of 4 spaces after task item marker before
    would be parsed as verbatim block.
 
+- Fix header appears empty if the header text is non-ascii alpha characters, for example Chinese or another language.
+
 Version 1.6.0 (2015-09-18)
 --------------------------
 - Fixed collision between ANCHORLINKS and STRIKETHROUGH, WIKILINKS extensions (#161)

@@ -82,6 +82,10 @@ This function is also called for VerbatimNode from the DefaultVerbatimSerializer
 
 - Fix header appears empty if the header text is non-ascii alpha characters, for example Chinese or another language.
 
+- Fix infinite recursion while parsing markdown containing HTML blocks without terminating tags and containing
+    fenced code with HTML or HTML looking text. This fix causes HTML blocks to be terminated by a blank line.
+    This causes an incompatibility with Markdown that can be avoided by removing blank lines inside HTML blocks.
+
 Version 1.6.0 (2015-09-18)
 --------------------------
 - Fixed collision between ANCHORLINKS and STRIKETHROUGH, WIKILINKS extensions (#161)

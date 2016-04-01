@@ -185,9 +185,9 @@ public interface Extensions {
     static final int MULTI_LINE_IMAGE_URLS = 0x04000000;
 
     /**
-     * These are all that's left of 32 bits in the not included in ALL.
+     * trace parsing elements to console
      */
-    static final int UNUSED_1 = 0x08000000;
+    static final int TRACE_PARSER = 0x08000000;
 
     /**
      * allow Strong/Emphasis marks to start when not preceded by alphanumeric for _ and

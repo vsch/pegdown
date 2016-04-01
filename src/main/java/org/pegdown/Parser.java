@@ -76,6 +76,10 @@ public class Parser extends BaseParser<Object> implements Extensions {
         return true;
     }
 
+    public boolean debugTrace(String msg) {
+        return ext(TRACE_PARSER) ? debugMsg(msg, "") : true;
+    }
+
     public Parser(Integer options, Long maxParsingTimeInMillis, ParseRunnerProvider parseRunnerProvider, PegDownPlugins plugins) {
         this.options = options;
         this.maxParsingTimeInMillis = maxParsingTimeInMillis;
@@ -131,6 +135,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
 
     public Rule Para() {
         return Sequence(
+                debugTrace("Para[" + String.valueOf(currentIndex()) + "]"),
                 NonindentSpace(),
                 NodeSequence(
                         // The Para Rule only tests for the presence of a following blank line, but does not consume it.
@@ -147,6 +152,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
     public Rule Footnote() {
         Var<FootnoteNode> node = new Var<FootnoteNode>();
         return Sequence(
+                debugTrace("Footnote[" + String.valueOf(currentIndex()) + "]"),
                 NonindentSpace(),
                 NodeSequence(
                         Sequence(
@@ -176,6 +182,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
         StringBuilderVar inner = new StringBuilderVar();
         StringBuilderVar optional = new StringBuilderVar();
         return NodeSequence(
+                debugTrace("BlockQuote[" + String.valueOf(currentIndex()) + "]"),
                 OneOrMore(
                         CrossedOut(Sequence('>', Optional(' ')), inner), Line(inner),
                         ZeroOrMore(
@@ -201,6 +208,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
         StringBuilderVar text = new StringBuilderVar();
         StringBuilderVar line = new StringBuilderVar();
         return NodeSequence(
+                debugTrace("Verbatim[" + String.valueOf(currentIndex()) + "]"),
                 OneOrMore(
                         ZeroOrMore(BlankLine(), line.append('\n')),
                         Indent(), push(currentIndex()),
@@ -221,6 +229,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
         StringBuilderVar text = new StringBuilderVar();
         Var<Integer> markerLength = new Var<Integer>();
         return NodeSequence(
+                debugTrace("FencedCodeBlock[" + String.valueOf(currentIndex()) + "]"),
                 // vsch: test to see if what appears to be a code fence is just inline code
                 // vsch: change to accept code fence with all blank lines
                 CodeFence(markerLength),
@@ -249,6 +258,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
 
     public Rule HorizontalRule() {
         return Sequence(
+                debugTrace("HorizontalRule[" + String.valueOf(currentIndex()) + "]"),
                 NonindentSpace(),
                 NodeSequence(
                         FirstOf(HorizontalRule('*'), HorizontalRule('-'), HorizontalRule('_')),
@@ -271,6 +281,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
 
     public Rule AtxHeading() {
         return Sequence(
+                debugTrace("AtxHeading[" + String.valueOf(currentIndex()) + "]"),
                 AtxStart(),
                 //Optional(Sp()), // this should be just Sp() because it is already ZeroOrMore which means it is optional
                 // ISSUE: #144, Add GFM style headers, space after # is required
@@ -315,6 +326,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
     public Rule SetextHeading() {
         return Sequence(
                 // test for successful setext heading before actually building it to reduce backtracking
+                debugTrace("SetextHeading[" + String.valueOf(currentIndex()) + "]"),
                 Test(OneOrMore(NotNewline(), ANY), Newline(), FirstOf(NOrMore('=', 3), NOrMore('-', 3)), Sp(), Newline()),
                 FirstOf(SetextHeading1(), SetextHeading2())
         );
@@ -416,6 +428,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
     public Rule DefinitionList() {
         return NodeSequence(
                 // test for successful definition list match before actually building it to reduce backtracking
+                debugTrace("DefinitionList[" + String.valueOf(currentIndex()) + "]"),
                 TestNot(Spacechar()),
                 Test(
                         OneOrMore(TestNot(BlankLine()), TestNot(DefListBullet()),
@@ -436,6 +449,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
 
     public Rule DefListTerm() {
         return NodeSequence(
+                debugTrace("DefListTerm[" + String.valueOf(currentIndex()) + "]"),
                 TestNot(Spacechar()),
                 TestNot(DefListBullet()),
                 push(new DefinitionTermNode()),
@@ -481,6 +495,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
                 }
             };
             return NodeSequence(
+                    debugTrace("BulletList:TaskItems[" + String.valueOf(currentIndex()) + "]"),
                     TaskListItem(Bullet(), itemNodeCreator), push(new BulletListNode(popAsNode())),
                     ZeroOrMore(
                             //vsch: this one will absorb all blank lines but the last one preceding a list item otherwise two blank lines end a list and start a new one
@@ -495,6 +510,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
                 }
             };
             return NodeSequence(
+                    debugTrace("BulletList[" + String.valueOf(currentIndex()) + "]"),
                     ListItem(Bullet(), itemNodeCreator), push(new BulletListNode(popAsNode())),
                     ZeroOrMore(
                             //vsch: this one will absorb all blank lines but the last one preceding a list item otherwise two blank lines end a list and start a new one
@@ -512,6 +528,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
             }
         };
         return NodeSequence(
+                debugTrace("OrderedList[" + String.valueOf(currentIndex()) + "]"),
                 ListItem(Enumerator(), itemNodeCreator), push(new OrderedListNode(popAsNode())),
                 ZeroOrMore(
                         //vsch: this one will absorb all blank lines but the last one preceding a list item otherwise two blank lines end a list and start a new one
@@ -531,6 +548,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
         Var<Boolean> tight = new Var<Boolean>(false);
         Var<SuperNode> tightFirstItem = new Var<SuperNode>();
         return Sequence(
+                debugTrace("ListItem[" + String.valueOf(currentIndex()) + "]"),
                 push(getContext().getCurrentIndex()),
                 FirstOf(CrossedOut(BlankLine(), block), tight.set(true)),
                 CrossedOut(itemStart, block), Line(block),
@@ -582,6 +600,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
         Var<Integer> taskType = new Var<Integer>(0);
         Var<SuperNode> tightFirstItem = new Var<SuperNode>();
         return Sequence(
+                debugTrace("TaskListItem[" + String.valueOf(currentIndex()) + "]"),
                 push(getContext().getCurrentIndex()),
                 FirstOf(CrossedOut(BlankLine(), block), tight.set(true)),
                 CrossedOut(itemStart, block), Optional(CrossedOut(FirstOf(Sequence("[ ] ", Sp(), taskType.set(1)), Sequence(FirstOf("[x] ", "[X] "), Sp(), taskType.set(2))), taskListMarker)),
@@ -776,15 +795,24 @@ public class Parser extends BaseParser<Object> implements Extensions {
 
     public Rule HtmlBlock() {
         return NodeSequence(
+                debugTrace("HtmlBlock[" + String.valueOf(currentIndex()) + "]"),
                 FirstOf(HtmlBlockInTags(), HtmlComment(), HtmlBlockSelfClosing()),
                 push(new HtmlBlockNode(ext(SUPPRESS_HTML_BLOCKS) ? "" : match())),
                 BlankLine()
         );
     }
 
+    public Rule HtmlComment() {
+        return Sequence(
+                debugTrace("HtmlComment[" + String.valueOf(currentIndex()) + "]"),
+                "<!--", ZeroOrMore(TestNot("-->"), ANY), "-->"
+        );
+    }
+
     public Rule HtmlBlockInTags() {
         StringVar tagName = new StringVar();
         return Sequence(
+                debugTrace("HtmlBlockInTags[" + String.valueOf(currentIndex()) + "]"),
                 Test(HtmlBlockOpen(tagName)), // get the type of tag if there is one
                 HtmlTagBlock(tagName) // specifically match that type of tag
         );
@@ -792,26 +820,52 @@ public class Parser extends BaseParser<Object> implements Extensions {
 
     @Cached
     public Rule HtmlTagBlock(StringVar tagName) {
-        return Sequence(
-                HtmlBlockOpen(tagName),
-                ZeroOrMore(
-                        FirstOf(
-                                HtmlTagBlock(tagName),
-                                Sequence(TestNot(HtmlBlockClose(tagName)), ANY)
-                        )
-                ),
-                HtmlBlockClose(tagName)
-        );
+        if (ext(SUPPRESS_HTML_BLOCKS) || ext(SUPPRESS_INLINE_HTML) ) {
+            return Sequence(
+                    debugTrace("HtmlTagBlock[" + String.valueOf(currentIndex()) + "]"),
+                    HtmlBlockOpen(tagName),
+                    ZeroOrMore(
+                            FirstOf(
+                                    Sequence(Test('<'), HtmlTagBlock(tagName)),
+                                    Sequence(TestNot(HtmlBlockClose(tagName)), ANY)
+                            )
+                    ),
+                    HtmlBlockClose(tagName)
+            );
+        } else {
+            return Sequence(
+                    debugTrace("HtmlTagBlock[" + String.valueOf(currentIndex()) + "]"),
+                    HtmlBlockOpen(tagName),
+                    ZeroOrMore(
+                            // vsch: the test for BlankLineIsNext() allows parsing of Markdown with lots of HTML blocks that are
+                            // not terminated and which contain fenced code that matches HTML. Without the test parsing goes into an infinite loop
+                            // therefore an HTML block cannot have blank lines so that it is terminated without trying to parse to the end of the stream
+                            // before recognizing that the block terminates early.
+                            FirstOf(
+                                    Sequence(Test('<'), HtmlTagBlock(tagName)),
+                                    Sequence(TestNot(HtmlBlockClose(tagName)), TestNot(BlankLineIsNext()), ANY)
+                            )
+                    ),
+                    HtmlBlockClose(tagName)
+            );
+        }
     }
 
     public Rule HtmlBlockSelfClosing() {
         StringVar tagName = new StringVar();
-        return Sequence('<', Spn1(), DefinedHtmlTagName(tagName), Spn1(), ZeroOrMore(HtmlAttribute()), Optional('/'),
-                Spn1(), '>');
+        return Sequence(
+                '<',
+                Spn1(), DefinedHtmlTagName(tagName), Spn1(), ZeroOrMore(HtmlAttribute()), Optional('/'),
+                Spn1(), '>'
+        );
     }
 
     public Rule HtmlBlockOpen(StringVar tagName) {
-        return Sequence('<', Spn1(), DefinedHtmlTagName(tagName), Spn1(), ZeroOrMore(HtmlAttribute()), '>');
+        return Sequence(
+                debugTrace("HtmlBlockOpen[" + String.valueOf(currentIndex()) + "]"),
+                '<',
+                Spn1(), DefinedHtmlTagName(tagName), Spn1(), ZeroOrMore(HtmlAttribute()), '>'
+        );
     }
 
     @DontSkipActionsInPredicates
@@ -872,6 +926,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
 
     public Rule Inlines() {
         return NodeSequence(
+                debugTrace("Inlines[" + String.valueOf(currentIndex()) + "]"),
                 InlineOrIntermediateEndline(), push(new SuperNode(popAsNode())),
                 ZeroOrMore(InlineOrIntermediateEndline(), addAsChild()),
                 Optional(Endline(), drop())
@@ -944,6 +999,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
         // This keeps the parser from getting bogged down on long strings of '*', '_' or '~',
         // or strings of '*', '_' or '~' with space on each side:
         return NodeSequence(
+                debugTrace("UlOrStarLine[" + String.valueOf(currentIndex()) + "]"),
                 FirstOf(CharLine('_'), CharLine('*'), CharLine('~')),
                 push(new TextNode(match()))
         );
@@ -982,6 +1038,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
     @Cached
     public Rule EmphOrStrong(String chars) {
         return Sequence(
+                debugTrace("EmphOrStrong[" + String.valueOf(currentIndex()) + "]"),
                 Test(mayEnterEmphOrStrong(chars)),
                 EmphOrStrongOpen(chars),
                 push(new StrongEmphSuperNode(chars)),
@@ -1171,6 +1228,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
 
     public Rule Image() {
         return NodeSequence(
+                debugTrace("Image[" + String.valueOf(currentIndex()) + "]"),
                 '!', ImageAlt(),
                 FirstOf(ext(MULTI_LINE_IMAGE_URLS) ? MultiLineURLImage() : NOTHING, ExplicitLink(true), ReferenceLink(true))
         );
@@ -1217,6 +1275,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
     @MemoMismatches
     public Rule Link() {
         return NodeSequence(
+                debugTrace("Link[" + String.valueOf(currentIndex()) + "]"),
                 FirstOf(new ArrayBuilder<Rule>()
                         .addNonNulls(ext(WIKILINKS) ? new Rule[] { WikiLink() } : null)
                         .add(Sequence(Label(), FirstOf(ExplicitLink(false), ReferenceLink(false))))
@@ -1242,6 +1301,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
 
     public Rule ReferenceLink(boolean image) {
         return Sequence(
+                debugTrace("ReferenceLink[" + String.valueOf(currentIndex()) + "]"),
                 FirstOf(
                         Sequence(
                                 Spn1(), push(match()),
@@ -1294,6 +1354,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
 
     public Rule AutoLink() {
         return Sequence(
+                debugTrace("AutoLink[" + String.valueOf(currentIndex()) + "]"),
                 ext(AUTOLINKS) ? Optional('<') : Ch('<'),
                 FirstOf(AutoLinkUrl(), AutoLinkEmail()),
                 ext(AUTOLINKS) ? Optional('>') : Ch('>')
@@ -1302,6 +1363,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
 
     public Rule WikiLink() {
         return Sequence(
+                debugTrace("WikiLink[" + String.valueOf(currentIndex()) + "]"),
                 "[[",
                 ext(INTELLIJ_DUMMY_IDENTIFIER) ? ZeroOrMore(TestNot(FirstOf("]]", BlankLine())), ANY) : OneOrMore(TestNot(FirstOf("]]", BlankLine())), ANY), // might have to restrict from ANY
                 push(new WikiLinkNode(match())),
@@ -1445,6 +1507,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
 
     public Rule Code() {
         return NodeSequence(
+                debugTrace("Code[" + String.valueOf(currentIndex()) + "]"),
                 Test('`'),
                 FirstOf(
                         Code(Ticks(1)),
@@ -1479,13 +1542,10 @@ public class Parser extends BaseParser<Object> implements Extensions {
 
     public Rule InlineHtml() {
         return NodeSequence(
+                debugTrace("InlineHtml[" + String.valueOf(currentIndex()) + "]"),
                 FirstOf(HtmlComment(), HtmlTag()),
                 push(new InlineHtmlNode(ext(SUPPRESS_INLINE_HTML) ? "" : match()))
         );
-    }
-
-    public Rule HtmlComment() {
-        return Sequence("<!--", ZeroOrMore(TestNot("-->"), ANY), "-->");
     }
 
     public Rule HtmlTag() {
@@ -1513,6 +1573,10 @@ public class Parser extends BaseParser<Object> implements Extensions {
 
     public Rule BlankLine() {
         return Sequence(Sp(), Newline());
+    }
+
+    public Rule BlankLineIsNext() {
+        return Sequence(Newline(), Sp(), Newline());
     }
 
     public Rule Line(StringBuilderVar sb) {
@@ -1691,6 +1755,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
     public Rule Abbreviation() {
         Var<AbbreviationNode> node = new Var<AbbreviationNode>();
         return Sequence(
+                debugTrace("Abbreviation[" + String.valueOf(currentIndex()) + "]"),
                 NonindentSpace(),
                 NodeSequence(
                         '*', Label(), push(node.setAndGet(new AbbreviationNode(popAsNode()))),
@@ -1714,6 +1779,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
 
     public Rule Toc() {
         return Sequence(
+                debugTrace("Toc[" + String.valueOf(currentIndex()) + "]"),
                 NonindentSpace(),
                 NodeSequence("[TOC",
                         Optional(Sp(), "level=", Digit(), push(match())),
@@ -1728,6 +1794,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
     public Rule Table() {
         Var<TableNode> node = new Var<TableNode>();
         return NodeSequence(
+                debugTrace("Table[" + String.valueOf(currentIndex()) + "]"),
                 push(node.setAndGet(new TableNode())),
                 Optional(
                         NodeSequence(

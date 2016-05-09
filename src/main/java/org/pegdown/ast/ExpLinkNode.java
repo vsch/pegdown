@@ -21,13 +21,21 @@ package org.pegdown.ast;
 import java.util.List;
 
 public class ExpLinkNode extends SuperNode {
-    public final String url;
-    public final String title;
+    private String url;
+    private String title;
 
     public ExpLinkNode(String title, String url, Node child) {
         super(child);
         this.url = url;
         this.title = title;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public String getUrl() {
+        return url;
     }
 
     @Override

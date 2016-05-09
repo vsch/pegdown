@@ -80,13 +80,13 @@ public class LinkRenderer {
     }
 
     public Rendering render(ExpLinkNode node, String text) {
-        Rendering rendering = new Rendering(node.url, text);
-        return StringUtils.isEmpty(node.title) ? rendering : rendering.withAttribute("title", encode(node.title));
+        Rendering rendering = new Rendering(node.getUrl(), text);
+        return StringUtils.isEmpty(node.getTitle()) ? rendering : rendering.withAttribute("title", encode(node.getTitle()));
     }
 
     public Rendering render(ExpImageNode node, String text) {
-        Rendering rendering = new Rendering(node.url, text);
-        return StringUtils.isEmpty(node.title) ? rendering : rendering.withAttribute("title", encode(node.title));
+        Rendering rendering = new Rendering(node.getUrl(), text);
+        return StringUtils.isEmpty(node.getTitle()) ? rendering : rendering.withAttribute("title", encode(node.getTitle()));
     }
 
     public Rendering render(MailLinkNode node) {

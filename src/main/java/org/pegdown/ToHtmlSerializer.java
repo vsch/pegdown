@@ -91,6 +91,18 @@ public class ToHtmlSerializer implements Visitor, HeaderIdComputer {
         return printer.getString();
     }
 
+    protected void addAbbreviations(RootNode node) {
+        for (AbbreviationNode abbrNode : node.getAbbreviations()) {
+            visitChildren(abbrNode);
+            String abbr = printer.getString();
+            printer.clear();
+            abbrNode.getExpansion().accept(this);
+            String expansion = printer.getString();
+            abbreviations.put(abbr, expansion);
+            printer.clear();
+        }
+    }
+
     public void visit(RootNode node) {
         rootNodeRecursion++;
         try {
@@ -99,22 +111,14 @@ public class ToHtmlSerializer implements Visitor, HeaderIdComputer {
                 HeaderIdComputingVisitor serializer = new HeaderIdComputingVisitor(this);
                 serializer.visit(node);
                 headerOffsetAnchorIds = serializer.headerOffsetAnchorIds;
-            }
 
-            for (ReferenceNode refNode : node.getReferences()) {
-                visitChildren(refNode);
-                references.put(normalize(printer.getString()), refNode);
-                printer.clear();
-            }
+                for (ReferenceNode refNode : node.getReferences()) {
+                    visitChildren(refNode);
+                    references.put(normalize(printer.getString()), refNode);
+                    printer.clear();
+                }
 
-            for (AbbreviationNode abbrNode : node.getAbbreviations()) {
-                visitChildren(abbrNode);
-                String abbr = printer.getString();
-                printer.clear();
-                abbrNode.getExpansion().accept(this);
-                String expansion = printer.getString();
-                abbreviations.put(abbr, expansion);
-                printer.clear();
+                addAbbreviations(node);
             }
 
             visitChildren(node);
@@ -126,29 +130,33 @@ public class ToHtmlSerializer implements Visitor, HeaderIdComputer {
                     footnotes.put(referencedFootnotes.get(footnoteNode.getLabel()), footnoteNode);
                 }
 
-                printer.print("<div class=\"footnotes\">\n");
-                printer.print("<hr/>\n");
-                printer.print("<ol>\n");
-
-                for (int i = 0; i < referencedFootnotes.size(); i++) {
-                    int num = i + 1;
-                    if (!footnotes.containsKey(num)) {
-                        // empty footnote
-                        printer.print("<li id=\"fn-" + num + "\"><p><a href=\"#fnref-" + num + "\" class=\"footnote-backref\">&#8617;</a></p></li>\n");
-                    } else {
-                        printer.print("<li id=\"fn-" + num + "\"><p>");
-                        visitChildren((SuperNode) footnotes.get(num).getFootnote());
-                        printer.print("<a href=\"#fnref-" + num + "\" class=\"footnote-backref\">&#8617;</a></p>");
-                        printer.print("</li>\n");
-                    }
-                }
-
-                printer.print("</ol>\n");
-                printer.print("</div>\n");
+                printFootnotes(footnotes);
             }
         } finally {
             rootNodeRecursion--;
         }
+    }
+
+    protected void printFootnotes(Map<Integer, FootnoteNode> footnotes) {
+        printer.print("<div class=\"footnotes\">\n");
+        printer.print("<hr/>\n");
+        printer.print("<ol>\n");
+
+        for (int i = 0; i < referencedFootnotes.size(); i++) {
+            int num = i + 1;
+            if (!footnotes.containsKey(num)) {
+                // empty footnote
+                printer.print("<li id=\"fn-" + num + "\"><p><a href=\"#fnref-" + num + "\" class=\"footnote-backref\">&#8617;</a></p></li>\n");
+            } else {
+                printer.print("<li id=\"fn-" + num + "\"><p>");
+                visitChildren((SuperNode) footnotes.get(num).getFootnote());
+                printer.print("<a href=\"#fnref-" + num + "\" class=\"footnote-backref\">&#8617;</a></p>");
+                printer.print("</li>\n");
+            }
+        }
+
+        printer.print("</ol>\n");
+        printer.print("</div>\n");
     }
 
     public void visit(FootnoteNode node) {
@@ -352,7 +360,7 @@ public class ToHtmlSerializer implements Visitor, HeaderIdComputer {
             printer.print("![").print(text).print(']');
             if (node.separatorSpace != null) {
                 printer.print(node.separatorSpace).print('[');
-                if (node.referenceKey != null) printer.print(key);
+                if (node.referenceKey != null && node.referenceKey.getChildren().size() != 0) printer.print(key);
                 printer.print(']');
             }
         } else printImageTag(node, linkRenderer.render(node, refNode.getUrl(), refNode.getTitle(), text));
@@ -367,7 +375,7 @@ public class ToHtmlSerializer implements Visitor, HeaderIdComputer {
             printer.print('[').print(text).print(']');
             if (node.separatorSpace != null) {
                 printer.print(node.separatorSpace).print('[');
-                if (node.referenceKey != null) printer.print(key);
+                if (node.referenceKey != null && node.referenceKey.getChildren().size() != 0) printer.print(key);
                 printer.print(']');
             }
         } else printLink(node, linkRenderer.render(node, refNode.getUrl(), refNode.getTitle(), text));
@@ -570,10 +578,10 @@ public class ToHtmlSerializer implements Visitor, HeaderIdComputer {
     }
 
     public void visit(TextNode node) {
-        if (abbreviations.isEmpty()) {
-            printer.print(node.getText());
-        } else {
+        if (!abbreviations.isEmpty()) {
             printWithAbbreviations(node.getText());
+        } else {
+            printer.print(node.getText());
         }
     }
 
@@ -715,8 +723,30 @@ public class ToHtmlSerializer implements Visitor, HeaderIdComputer {
     }
 
     protected void printWithAbbreviations(String string) {
-        Map<Integer, Map.Entry<String, String>> expansions = null;
+        Map<Integer, Map.Entry<String, String>> expansions = new TreeMap<Integer, Map.Entry<String, String>>();
 
+        findAbbreviations(string, expansions);
+
+        if (!expansions.isEmpty()) {
+            int ix = 0;
+            for (Map.Entry<Integer, Map.Entry<String, String>> entry : expansions.entrySet()) {
+                int sx = entry.getKey();
+                String abbr = entry.getValue().getKey();
+                String expansion = entry.getValue().getValue();
+
+                // print the text before the abbreviation
+                if (sx > ix) printer.printEncoded(string.substring(ix, sx));
+
+                printAbbrExpansion(abbr, expansion);
+                ix = sx + abbr.length();
+            }
+            printer.print(string.substring(ix));
+        } else {
+            printer.print(string);
+        }
+    }
+
+    protected void findAbbreviations(String string, Map<Integer, Map.Entry<String, String>> expansions) {
         for (Map.Entry<String, String> entry : abbreviations.entrySet()) {
             // first check, whether we have a legal match
             String abbr = entry.getKey();
@@ -735,35 +765,20 @@ public class ToHtmlSerializer implements Visitor, HeaderIdComputer {
                 }
 
                 // ok, legal match so save an expansions "task" for all matches
-                if (expansions == null) {
-                    expansions = new TreeMap<Integer, Map.Entry<String, String>>();
-                }
                 expansions.put(sx, entry);
             }
         }
+    }
 
-        if (expansions != null) {
-            int ix = 0;
-            for (Map.Entry<Integer, Map.Entry<String, String>> entry : expansions.entrySet()) {
-                int sx = entry.getKey();
-                String abbr = entry.getValue().getKey();
-                String expansion = entry.getValue().getValue();
-
-                printer.printEncoded(string.substring(ix, sx));
-                printer.print("<abbr");
-                if (StringUtils.isNotEmpty(expansion)) {
-                    printer.print(" title=\"");
-                    printer.printEncoded(expansion);
-                    printer.print('"');
-                }
-                printer.print('>');
-                printer.printEncoded(abbr);
-                printer.print("</abbr>");
-                ix = sx + abbr.length();
-            }
-            printer.print(string.substring(ix));
-        } else {
-            printer.print(string);
+    protected void printAbbrExpansion(String abbr, String expansion) {
+        printer.print("<abbr");
+        if (StringUtils.isNotEmpty(expansion)) {
+            printer.print(" title=\"");
+            printer.printEncoded(expansion);
+            printer.print('"');
         }
+        printer.print('>');
+        printer.printEncoded(abbr);
+        printer.print("</abbr>");
     }
 }

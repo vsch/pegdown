@@ -454,15 +454,15 @@ public class Parser extends BaseParser<Object> implements Extensions {
                 TestNot(DefListBullet()),
                 push(new DefinitionTermNode()),
                 OneOrMore(DefTermInline(), addAsChild()),
-                Optional(':'),
-                Newline()
+                Optional(Sp(), ':'),
+                Sp(), Newline()
         );
     }
 
     public Rule DefTermInline() {
         return Sequence(
                 NotNewline(),
-                TestNot(':', Newline()),
+                TestNot(':', Sp(), Newline()),
                 Inline()
         );
     }
@@ -577,9 +577,9 @@ public class Parser extends BaseParser<Object> implements Extensions {
                         // out in Block Rule before getting to the ListItem rule. This happens if there is nothing else in the
                         // sub-item that will set its looseness and it is the first sub-item of its list. So we need to wrap it
                         // in a ParaNode to have its looseness properly reflected.
-                        (tight.get() ? push(parseListBlock(block)) :
+                        (tight.get() ? push(parseListBlock(block.appended("\n\n"))) :
                                 ((!ext(FORCELISTITEMPARA)) || tightFirstItem.isNotSet() || wrapFirstItemInPara(tightFirstItem.get())) &&
-                                        push(wrapFirstSubItemInPara((SuperNode) parseListBlock(block.appended('\n'))))
+                                        push(wrapFirstSubItemInPara((SuperNode) parseListBlock(block.appended("\n\n"))))
                         ) && addAsChild()
                 ),
                 setListItemIndices()
@@ -631,9 +631,9 @@ public class Parser extends BaseParser<Object> implements Extensions {
                         // out in Block Rule before getting to the ListItem rule. This happens if there is nothing else in the
                         // sub-item that will set its looseness and it is the first sub-item of its list. So we need to wrap it
                         // in a ParaNode to have its looseness properly reflected.
-                        (tight.get() ? push(parseListBlock(block)) :
+                        (tight.get() ? push(parseListBlock(block.appended("\n\n"))) :
                                 ((!ext(FORCELISTITEMPARA)) || tightFirstItem.isNotSet() || wrapFirstItemInPara(tightFirstItem.get())) &&
-                                        push(wrapFirstSubItemInPara((SuperNode) parseListBlock(block.appended('\n'))))
+                                        push(wrapFirstSubItemInPara((SuperNode) parseListBlock(block.appended("\n\n"))))
                         ) && addAsChild()
                 ),
                 setListItemIndices()
@@ -1591,7 +1591,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
     public Rule Entity() {
         return NodeSequence(
                 Sequence('&', FirstOf(HexEntity(), DecEntity(), CharEntity()), ';'),
-                push(new TextNode(match()))
+                push(new HtmlEntityNode(match()))
         );
     }
 
@@ -1660,7 +1660,8 @@ public class Parser extends BaseParser<Object> implements Extensions {
         if (ext(AUTOLINKS)) {
             chars += "(){}";
         }
-        if (ext(DEFINITIONS)) {
+        // vsch: KLUDGE: need colons for github emoji shortcuts
+        if (ext(DEFINITIONS) || ext(DUMMY_REFERENCE_KEY)) {
             chars += ":";
         }
         if (ext(FOOTNOTES)) {

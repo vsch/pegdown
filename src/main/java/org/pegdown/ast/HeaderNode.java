@@ -59,11 +59,11 @@ public class HeaderNode extends SuperNode {
     }
 
     public String getId() {
-        return ((TextNode) getChildren().get(0)).getText().toLowerCase().replaceAll("\\s", "");
+        return getChildren().size() > 0 && getChildren().get(0) instanceof TextNode ? ((TextNode) getChildren().get(0)).getText().toLowerCase().replaceAll("\\s", "") : "";
     }
 
     public String getText() {
-        return ((TextNode) getChildren().get(0)).getText();
+        return getChildren().size() > 0 && getChildren().get(0) instanceof TextNode ? ((TextNode) getChildren().get(0)).getText() : "";
     }
 
 

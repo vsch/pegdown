@@ -18,26 +18,13 @@
 
 package org.pegdown.ast;
 
-public class ExpImageNode extends SuperNode {
-    private String url;
-    private String title;
+import org.parboiled.common.ImmutableList;
+import org.parboiled.common.StringUtils;
 
-    public ExpImageNode(String title, String url, Node child) {
-        super(child);
-        this.url = url;
-        this.title = title;
-    }
+import java.util.List;
 
-    public String getUrl() {
-        return url;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    @Override
-    public void accept(Visitor visitor) {
-        visitor.visit(this);
+public class HtmlEntityNode extends TextNode {
+    public HtmlEntityNode(String text) {
+        super(text);
     }
 }

@@ -337,6 +337,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
         Var<HeaderNode> ref = new Var<HeaderNode>();
 
         return Sequence(
+                ext(FENCED_CODE_BLOCKS) ? TestNot(FirstOf(NOrMore('`', 3), NOrMore('~', 3))) : EMPTY,
                 SetextInline(), push(ref.setAndGet(new HeaderNode(1, ext(Extensions.TOC), popAsNode(), true))),
                 ZeroOrMore(SetextInline(), addAsChild()),
                 wrapInAnchor(),
@@ -349,6 +350,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
         Var<HeaderNode> ref = new Var<HeaderNode>();
 
         return Sequence(
+                ext(FENCED_CODE_BLOCKS) ? TestNot(FirstOf(NOrMore('`', 3), NOrMore('~', 3))) : EMPTY,
                 SetextInline(), push(ref.setAndGet(new HeaderNode(2, ext(Extensions.TOC), popAsNode(), true))),
                 ZeroOrMore(SetextInline(), addAsChild()),
                 wrapInAnchor(),
@@ -454,7 +456,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
                 TestNot(DefListBullet()),
                 push(new DefinitionTermNode()),
                 OneOrMore(DefTermInline(), addAsChild()),
-                Optional(Sp(), ':'),
+                Sp(), Optional(':'),
                 Sp(), Newline()
         );
     }
@@ -462,7 +464,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
     public Rule DefTermInline() {
         return Sequence(
                 NotNewline(),
-                TestNot(':', Sp(), Newline()),
+                TestNot(Sp(), ':', Sp(), Newline()),
                 Inline()
         );
     }
@@ -820,7 +822,7 @@ public class Parser extends BaseParser<Object> implements Extensions {
 
     @Cached
     public Rule HtmlTagBlock(StringVar tagName) {
-        if (ext(SUPPRESS_HTML_BLOCKS) || ext(SUPPRESS_INLINE_HTML) ) {
+        if (ext(SUPPRESS_HTML_BLOCKS) || ext(SUPPRESS_INLINE_HTML)) {
             return Sequence(
                     debugTrace("HtmlTagBlock[" + String.valueOf(currentIndex()) + "]"),
                     HtmlBlockOpen(tagName),
@@ -1760,17 +1762,18 @@ public class Parser extends BaseParser<Object> implements Extensions {
                 NonindentSpace(),
                 NodeSequence(
                         '*', Label(), push(node.setAndGet(new AbbreviationNode(popAsNode()))),
-                        Sp(), ':', Sp(), AbbreviationText(node),
+                        Sp(), ':', Sp(), AbbreviationText(node), Newline(),
                         abbreviations.add(node.get())
                 )
         );
     }
 
     public Rule AbbreviationText(Var<AbbreviationNode> node) {
+        StringBuilderVar text = new StringBuilderVar();
         return Sequence(
                 NodeSequence(
-                        push(new SuperNode()),
-                        ZeroOrMore(NotNewline(), Inline(), addAsChild())
+                        ZeroOrMore(NotNewline(), ANY, text.append(match())),
+                        push(new TextNode(text.getString()))
                 ),
                 node.get().setExpansion(popAsNode())
         );

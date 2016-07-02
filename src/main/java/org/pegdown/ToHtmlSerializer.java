@@ -287,9 +287,10 @@ public class ToHtmlSerializer implements Visitor, HeaderIdComputer {
             // vsch: #185 handle GitHub style task list items, these are a bit messy because the <input> checkbox needs to be
             // included inside the optional <p></p> first grand-child of the list item, first child is always RootNode
             // because the list item text is recursively parsed.
-            List<Node> children = node.getChildren().get(0).getChildren();
-            Node firstChild = children.size() > 0 ? children.get(0) : null;
-            boolean firstIsPara = firstChild instanceof ParaNode;
+            Node firstChild = node.getChildren().get(0);
+            List<Node> grandChildren = firstChild.getChildren();
+            Node firstGrandChild = grandChildren.size() > 0 ? grandChildren.get(0) : null;
+            boolean firstIsPara = firstGrandChild instanceof ParaNode;
             int indent = node.getChildren().size() > 1 ? 2 : 0;
             boolean startWasNewLine = printer.endsWithNewLine();
             Attributes attributes = new Attributes().add("class", "task-list-item");
@@ -299,7 +300,20 @@ public class ToHtmlSerializer implements Visitor, HeaderIdComputer {
                 Attributes paraAttributes = new Attributes();
                 printer.println().print("<p").print(preview(node, "p", paraAttributes, tocGenerationVisit)).print(">");
                 printTaskListItemMarker(printer, (TaskListNode) node, true);
-                visitChildren((SuperNode) firstChild);
+
+                // vsch: here we have a problem, the first child can be a paragraph node, which is a bug
+                if (firstGrandChild.getChildren().size() > 0) {
+                    if (firstGrandChild.getChildren().get(0) instanceof ParaNode) {
+                        // we need to unwrap this too and skip para
+                        visitChildren((SuperNode) firstGrandChild.getChildren().get(0));
+                        visitChildrenSkipFirst((SuperNode) firstGrandChild);
+                    } else {
+                        visitChildren((SuperNode) firstGrandChild);
+                    }
+                }
+
+                // vsch: there could be more children in the first child node
+                visitChildrenSkipFirst((SuperNode) firstChild);
 
                 // render the other children, the p tag is taken care of here
                 visitChildrenSkipFirst(node);
@@ -503,30 +517,35 @@ public class ToHtmlSerializer implements Visitor, HeaderIdComputer {
             Attributes attributes = new Attributes();
             AnchorLinkNode anchorLinkNode;
             String headerId;
+            boolean[] openedItems = new boolean[7];
 
             printer.print('<').print("ul").print(preview(node, "ul", attributes, tocGenerationVisit)).print('>');
 
             for (int i = 0; i < node.getHeaders().size(); ++i) {
 
                 HeaderNode header = node.getHeaders().get(i);
+                int headerLevel = header.getLevel();
 
                 // ignore the level less than toc limit
-                if (header.getLevel() > node.getLevel()) {
+                if (headerLevel > node.getLevel()) {
                     continue;
                 }
 
-                if (lastLevel < header.getLevel()) {
-                    for (int lv = lastLevel; lv < header.getLevel(); ++lv) {
+                if (lastLevel < headerLevel) {
+                    for (int lv = lastLevel; lv < headerLevel; ++lv) {
                         printer.print("<ul>").println();
+                        openedItems[lv+1] = false;
                     }
-                } else if (lastLevel == header.getLevel()) {
+                } else if (lastLevel == headerLevel) {
                     if (i != 0) {
                         printer.print("</li>").println();
+                        openedItems[lastLevel] = false;
                     }
                 } else {
                     printer.print("</li>").println();
-                    for (int lv = header.getLevel(); lv < lastLevel; ++lv) {
+                    for (int lv = lastLevel; lv > headerLevel; lv--) {
                         printer.print("</ul></li>").println();
+                        openedItems[lv] = false;
                     }
                 }
 
@@ -540,6 +559,7 @@ public class ToHtmlSerializer implements Visitor, HeaderIdComputer {
                 headerId = headerOffsetAnchorIds.get(header.getStartIndex());
 
                 printer.print("<li><a href=\"#").print(headerId).print("\">");
+                openedItems[headerLevel] = true;
                 if (anchorLinkNode != null && header.getChildren().size() == 1) {
                     // must be extanchors with wrap, all text is in the anchor
                     printer.print(anchorLinkNode.getText());
@@ -550,10 +570,12 @@ public class ToHtmlSerializer implements Visitor, HeaderIdComputer {
                 }
                 printer.print("</a>");
 
-                lastLevel = header.getLevel();
+                lastLevel = headerLevel;
             }
-            for (int i = initLevel - 1; i < lastLevel; ++i) {
-                printer.print("</li></ul>").println();
+            
+            for (int i = lastLevel; i >= initLevel; i--) {
+                if (openedItems[i]) printer.print("</li>");
+                printer.print("</ul>").println();
             }
 
             printer.println();
